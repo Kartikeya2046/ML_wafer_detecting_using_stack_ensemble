@@ -1,0 +1,23 @@
+@"
+# Large datasets
+LSWMD.pkl/
+LSWMD.pkl.zip
+
+# Large generated training data
+data/X_CNN.pkl
+
+# Large model files
+models/cnn_model.keras
+models/cnn_model_5k.keras
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+"@ | Out-File -Encoding utf8 .gitignore
