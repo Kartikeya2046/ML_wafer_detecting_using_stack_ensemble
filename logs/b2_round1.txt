@@ -1,0 +1,15 @@
+base
+mode_B mode=B
+mode_AB mode=AB
+h16 hidden=16
+h32 hidden=32
+h64 hidden=64
+lr1e-3 lr=1e-3
+bs128 batch=128
+bs512 batch=512
+cw_sqrt cw=0.5
+cw_none cw=0
+mon_f1 monitor=f1
+pat50 patience=50
+drop02 dropout=0.2
+l2_1e-4 l2=1e-4

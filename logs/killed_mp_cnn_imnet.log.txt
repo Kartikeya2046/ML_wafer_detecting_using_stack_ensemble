@@ -1,0 +1,17 @@
+GPUs: [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+Epoch 1/1000
+2026-10-06 20:16:12.445120: E tensorflow/core/platform/windows/subprocess.cc:287] Call to CreateProcess failed. Error code: 2, command: '"ptxas.exe" "--version"'
+2026-10-06 20:16:12.447067: E tensorflow/core/platform/windows/subprocess.cc:287] Call to CreateProcess failed. Error code: 2, command: '"ptxas.exe" "--version"'
+2026-10-06 20:16:12.449659: E tensorflow/core/platform/windows/subprocess.cc:287] Call to CreateProcess failed. Error code: 2, command: '"ptxas.exe" "C:\Users\HPVICT~1\AppData\Local\Temp\/tempfile-KARTIKEYA-LAPTO-5d80-26864-65d2d0f55ab0e" "-o" "C:\Users\HPVICT~1\AppData\Local\Temp\/tempfile-KARTIKEYA-LAPTO-5d80-26864-65d2d0f55af54" "-arch=sm_86" "--warn-on-spills"'
+4074/4074 - 145s - loss: 1.1587 - accuracy: 0.6714 - val_loss: 0.3979 - val_accuracy: 0.8657 - 145s/epoch - 36ms/step
+Epoch 2/1000
+4074/4074 - 136s - loss: 0.6521 - accuracy: 0.8247 - val_loss: 0.3782 - val_accuracy: 0.9211 - 136s/epoch - 33ms/step
+Epoch 3/1000
+4074/4074 - 136s - loss: 0.4854 - accuracy: 0.8786 - val_loss: 0.1399 - val_accuracy: 0.9575 - 136s/epoch - 33ms/step
+Epoch 4/1000
+4074/4074 - 135s - loss: 0.4039 - accuracy: 0.8957 - val_loss: 0.2206 - val_accuracy: 0.9352 - 135s/epoch - 33ms/step
+Epoch 5/1000
+4074/4074 - 135s - loss: 0.2997 - accuracy: 0.9087 - val_loss: 0.2986 - val_accuracy: 0.8919 - 135s/epoch - 33ms/step
+Epoch 6/1000
+4074/4074 - 135s - loss: 0.2676 - accuracy: 0.9167 - val_loss: 0.2197 - val_accuracy: 0.9249 - 135s/epoch - 33ms/step
+Epoch 7/1000

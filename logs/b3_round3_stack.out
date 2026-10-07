@@ -1,0 +1,6 @@
+stk3_x3_cw0              B-cv macro-F1 0.8886 ± 0.0034  NearFull 0.896  epochs [0, 0, 0, 0, 0, 0]  0.0 min
+stk3_x3_cw0_w512         B-cv macro-F1 0.8872 ± 0.0015  NearFull 0.892  epochs [0, 0, 0, 0, 0, 0]  0.0 min
+stk3_r3_cw0_w1024        B-cv macro-F1 0.8859 ± 0.0029  NearFull 0.889  epochs [0, 0, 0, 0, 0, 0]  0.0 min
+stk3_r3_cw0_w512_d3      B-cv macro-F1 0.8841 ± 0.0022  NearFull 0.868  epochs [0, 0, 0, 0, 0, 0]  0.0 min
+stk3_r3_cw0_w512_bs128   B-cv macro-F1 0.8859 ± 0.0015  NearFull 0.893  epochs [0, 0, 0, 0, 0, 0]  0.0 min
+stk3_r3_cw0_w512_lr3e-4  B-cv macro-F1 0.8872 ± 0.0032  NearFull 0.899  epochs [0, 0, 0, 0, 0, 0]  0.0 min

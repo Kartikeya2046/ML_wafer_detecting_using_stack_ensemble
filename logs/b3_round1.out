@@ -1,0 +1,8 @@
+cw0              B_val macro-F1 0.8513 ± 0.0074  epochs [62, 47, 52]  5.0 min
+cw05             B_val macro-F1 0.8333 ± 0.0031  epochs [67, 58, 76]  6.4 min
+relu             B_val macro-F1 0.7826 ± 0.0054  epochs [46, 103, 81]  6.7 min
+base             B_val macro-F1 0.8032 ± 0.0186  epochs [187, 177, 84]  13.1 min
+d3               B_val macro-F1 0.7958 ± 0.0234  epochs [67, 154, 76]  12.6 min
+w256             B_val macro-F1 0.8356 ± 0.0047  epochs [127, 120, 141]  18.8 min
+drop02           B_val macro-F1 0.7633 ± 0.0016  epochs [75, 64, 99]  12.7 min
+lr1e-3           B_val macro-F1 0.7449 ± 0.0093  epochs [26, 26, 68]  3.8 min

@@ -220,7 +220,27 @@ faithful approximation, and flag it as a genuine limitation rather than silently
 than 100% without saying so. This is one of the "approval needed" cases from §0 — surface it
 to the user briefly rather than just quietly settling for less.
 
-**Phase 4/5 Limitation (Hardware Constraint):** Due to native Windows hardware acceleration constraints (TensorFlow GPU not supported >= 2.11), training the VGG16 CNN on the full 162,946 dataset would take multiple days on CPU. With explicit user approval, we faithfully reproduced the N=5000 benchmark directly studied in the paper instead (Table 7 in Kang & Kang 2021).
+**Scope (settled 2026-10-06, implementation_plan.md B0):** the headline numbers are the **full-data N=162,946**
+setting, not N=5000. The earlier N=5000 workaround (files `models/*_5k.keras`) is superseded: the CNN was
+later trained on the full set on the GPU via the conda env `D:\Anaconda3\envs\btp_lstm_gpu` (TF 2.10, the last
+TF with native-Windows GPU; RTX 3050 6GB). Run it with `sh run_gpu.sh <script>` (puts the env's CUDA DLLs on
+PATH) or `sh run_cpu.sh <script>` (same env, CPU only). Headline baseline files: `models/mfe_fnn_model.keras`,
+`models/cnn_model.keras`, `data/mfe_fnn_outputs.pkl`, `data/cnn_outputs.pkl` (all full-data).
+Paper comparison point is therefore Table 7 / Table 8 at N=162,946.
+
+**Facts verified from journal.pdf (2026-10-06):** 10 replicates, mean ± std, paired t-test. CNN = VGG16 **pre-trained
+on ImageNet** with GAP head (§4.3; both reference repos load pretrained VGG16). Proposed meta-learner = **MLR**
+(ridge regression of one-hot y on both probability vectors, λ=0.1, eq. 5–6); our notebook's 18→10→9 FNN is the
+paper's *Stacking-FNN* baseline. Table 7, N=162,946, F1macro: MFE+FNN 0.8599±0.0117, CNN 0.8679±0.0126,
+MultiNN 0.8455±0.0170, Stacking-DT 0.8789±0.0094, Stacking-FNN 0.8991±0.0096, Stacking-MLR 0.8949±0.0121.
+F1micro: 0.9741, 0.9775, 0.9728, 0.9757, 0.9808, 0.9801 (same order).
+
+**Stage 1 status (2026-10-07): reproduction + tuning FROZEN** (git tag `stage1-frozen`). Our test macro-F1 now
+matches/exceeds the paper: Stacking-MLR 0.8967 ± 0.0060, Stacking-FNN 0.9041 ± 0.0028, MFE+FNN 0.8572, CNN 0.8777.
+Key fixes vs the first reproduction: (1) stacker trained on in-sample base outputs collapsed rare classes → use the
+paper's MLR meta-learner; (2) class weights hurt every model here (the paper uses none); (3) CNN needs ImageNet init
+(paper §4.3); (4) mixed precision cost ~4 pts on this CNN → train fp32. Details: `tuning_log.md`, `results_comparison.md`.
+Next: Stage 2 (implementation_plan.md Part C) — plan it **with the user** via the grilling skill, not alone.
 
 ---
 

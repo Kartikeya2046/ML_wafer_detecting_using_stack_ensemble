@@ -1,0 +1,6 @@
+x3_cw0 cw=0
+x3_cw0_w512 cw=0 width=512
+r3_cw0_w1024 cw=0 width=1024
+r3_cw0_w512_d3 cw=0 width=512 depth=3
+r3_cw0_w512_bs128 cw=0 width=512 batch=128
+r3_cw0_w512_lr3e-4 cw=0 width=512 lr=3e-4

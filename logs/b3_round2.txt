@@ -1,0 +1,4 @@
+r2_cw0_w256 cw=0 width=256
+r2_cw0_w512 cw=0 width=512
+r2_cw0_pat50 cw=0 patience=50
+r2_cw0_w256_pat50 cw=0 width=256 patience=50

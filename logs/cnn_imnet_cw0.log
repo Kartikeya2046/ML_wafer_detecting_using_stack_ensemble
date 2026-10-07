@@ -1,0 +1,58 @@
+GPUs: [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+Epoch 1/1000
+2026-10-06 23:35:09.037433: E tensorflow/core/platform/windows/subprocess.cc:287] Call to CreateProcess failed. Error code: 2, command: '"ptxas.exe" "--version"'
+2026-10-06 23:35:09.038726: E tensorflow/core/platform/windows/subprocess.cc:287] Call to CreateProcess failed. Error code: 2, command: '"ptxas.exe" "--version"'
+2026-10-06 23:35:09.051986: E tensorflow/core/platform/windows/subprocess.cc:287] Call to CreateProcess failed. Error code: 2, command: '"ptxas.exe" "C:\Users\HPVICT~1\AppData\Local\Temp\/tempfile-KARTIKEYA-LAPTO-558c-2388-65d2fd6cf99d1" "-o" "C:\Users\HPVICT~1\AppData\Local\Temp\/tempfile-KARTIKEYA-LAPTO-558c-2388-65d2fd6cfc78f" "-arch=sm_86" "--warn-on-spills"'
+4074/4074 - 252s - loss: 0.1270 - accuracy: 0.9612 - val_loss: 0.0953 - val_accuracy: 0.9683 - 252s/epoch - 62ms/step
+Epoch 2/1000
+4074/4074 - 243s - loss: 0.0785 - accuracy: 0.9737 - val_loss: 0.0837 - val_accuracy: 0.9744 - 243s/epoch - 60ms/step
+Epoch 3/1000
+4074/4074 - 243s - loss: 0.0662 - accuracy: 0.9776 - val_loss: 0.0931 - val_accuracy: 0.9734 - 243s/epoch - 60ms/step
+Epoch 4/1000
+4074/4074 - 243s - loss: 0.0553 - accuracy: 0.9810 - val_loss: 0.0656 - val_accuracy: 0.9791 - 243s/epoch - 60ms/step
+Epoch 5/1000
+4074/4074 - 243s - loss: 0.0464 - accuracy: 0.9836 - val_loss: 0.0960 - val_accuracy: 0.9707 - 243s/epoch - 60ms/step
+Epoch 6/1000
+4074/4074 - 243s - loss: 0.0391 - accuracy: 0.9862 - val_loss: 0.0639 - val_accuracy: 0.9796 - 243s/epoch - 60ms/step
+Epoch 7/1000
+4074/4074 - 242s - loss: 0.0305 - accuracy: 0.9892 - val_loss: 0.0813 - val_accuracy: 0.9771 - 242s/epoch - 59ms/step
+Epoch 8/1000
+4074/4074 - 259s - loss: 0.0251 - accuracy: 0.9915 - val_loss: 0.0971 - val_accuracy: 0.9767 - 259s/epoch - 64ms/step
+Epoch 9/1000
+4074/4074 - 266s - loss: 0.0203 - accuracy: 0.9929 - val_loss: 0.1052 - val_accuracy: 0.9755 - 266s/epoch - 65ms/step
+Epoch 10/1000
+4074/4074 - 264s - loss: 0.0188 - accuracy: 0.9939 - val_loss: 0.0924 - val_accuracy: 0.9775 - 264s/epoch - 65ms/step
+Epoch 11/1000
+4074/4074 - 271s - loss: 0.0179 - accuracy: 0.9942 - val_loss: 0.1036 - val_accuracy: 0.9758 - 271s/epoch - 66ms/step
+Epoch 12/1000
+4074/4074 - 270s - loss: 0.0132 - accuracy: 0.9959 - val_loss: 0.1362 - val_accuracy: 0.9766 - 270s/epoch - 66ms/step
+Epoch 13/1000
+4074/4074 - 271s - loss: 0.0132 - accuracy: 0.9957 - val_loss: 0.1119 - val_accuracy: 0.9769 - 271s/epoch - 66ms/step
+Epoch 14/1000
+4074/4074 - 270s - loss: 0.0126 - accuracy: 0.9964 - val_loss: 0.1410 - val_accuracy: 0.9763 - 270s/epoch - 66ms/step
+Epoch 15/1000
+4074/4074 - 270s - loss: 0.0112 - accuracy: 0.9966 - val_loss: 0.1336 - val_accuracy: 0.9770 - 270s/epoch - 66ms/step
+Epoch 16/1000
+4074/4074 - 270s - loss: 0.0108 - accuracy: 0.9966 - val_loss: 0.1700 - val_accuracy: 0.9769 - 270s/epoch - 66ms/step
+Epoch 17/1000
+4074/4074 - 270s - loss: 0.0117 - accuracy: 0.9969 - val_loss: 0.1104 - val_accuracy: 0.9772 - 270s/epoch - 66ms/step
+Epoch 18/1000
+4074/4074 - 271s - loss: 0.0100 - accuracy: 0.9973 - val_loss: 0.1236 - val_accuracy: 0.9732 - 271s/epoch - 67ms/step
+Epoch 19/1000
+4074/4074 - 271s - loss: 0.0101 - accuracy: 0.9971 - val_loss: 0.1113 - val_accuracy: 0.9768 - 271s/epoch - 67ms/step
+Epoch 20/1000
+4074/4074 - 270s - loss: 0.0093 - accuracy: 0.9973 - val_loss: 0.1106 - val_accuracy: 0.9764 - 270s/epoch - 66ms/step
+Epoch 21/1000
+4074/4074 - 270s - loss: 0.0093 - accuracy: 0.9975 - val_loss: 0.1301 - val_accuracy: 0.9766 - 270s/epoch - 66ms/step
+Epoch 22/1000
+4074/4074 - 271s - loss: 0.0100 - accuracy: 0.9974 - val_loss: 0.1227 - val_accuracy: 0.9731 - 271s/epoch - 67ms/step
+Epoch 23/1000
+4074/4074 - 270s - loss: 0.0079 - accuracy: 0.9979 - val_loss: 0.1547 - val_accuracy: 0.9761 - 270s/epoch - 66ms/step
+Epoch 24/1000
+4074/4074 - 270s - loss: 0.0100 - accuracy: 0.9977 - val_loss: 0.1363 - val_accuracy: 0.9753 - 270s/epoch - 66ms/step
+Epoch 25/1000
+4074/4074 - 242s - loss: 0.0070 - accuracy: 0.9980 - val_loss: 0.1496 - val_accuracy: 0.9774 - 242s/epoch - 59ms/step
+Epoch 26/1000
+4074/4074 - 241s - loss: 0.0088 - accuracy: 0.9978 - val_loss: 0.1373 - val_accuracy: 0.9763 - 241s/epoch - 59ms/step
+train time 1.88 h
+[imnet_cw0] B_val macro-F1 0.8698

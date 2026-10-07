@@ -1,0 +1,8 @@
+r2_h64_bs512 hidden=64 batch=512
+r2_h64_bs512_f1 hidden=64 batch=512 monitor=f1
+r2_h64_bs512_l2 hidden=64 batch=512 l2=1e-4
+r2_h128_bs512 hidden=128 batch=512
+r2_h64_B hidden=64 mode=B
+r2_h64_B_cw0 hidden=64 mode=B cw=0
+r2_h64_B_cw05 hidden=64 mode=B cw=0.5
+r2_h64_AB_bs512 hidden=64 mode=AB batch=512

@@ -1,0 +1,4 @@
+r3_h128_B_cw0 hidden=128 mode=B cw=0
+r3_h128_B_cw0_bs128 hidden=128 mode=B cw=0 batch=128
+r3_h256_bs512 hidden=256 batch=512
+r3_h64_B_cw0_f1 hidden=64 mode=B cw=0 monitor=f1

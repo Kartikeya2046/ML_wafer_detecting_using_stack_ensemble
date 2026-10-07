@@ -1,0 +1,8 @@
+r2_h64_bs512             B-cv macro-F1 0.8754 ± 0.0029  NearFull 0.925  epochs [39, 38, 40, 39, 41, 40, 39, 38, 39, 39]  1.5 min
+r2_h64_bs512_l2          B-cv macro-F1 0.8750 ± 0.0024  NearFull 0.925  epochs [40, 38, 39, 38, 41, 40, 39, 38, 39, 39]  1.5 min
+r2_h128_bs512            B-cv macro-F1 0.8778 ± 0.0021  NearFull 0.921  epochs [35, 34, 34, 34, 35, 34, 35, 34, 35, 34]  1.6 min
+r2_h64_bs512_f1          B-cv macro-F1 0.8746 ± 0.0018  NearFull 0.921  epochs [33, 61, 28, 26, 41, 87, 35, 33, 31, 34]  2.0 min
+r2_h64_B                 B-cv macro-F1 0.8329 ± 0.0010  NearFull 0.897  epochs [63, 57, 54, 63, 64, 78, 99, 54, 55, 56]  1.6 min
+r2_h64_B_cw05            B-cv macro-F1 0.8695 ± 0.0011  NearFull 0.893  epochs [63, 83, 82, 90, 116, 91, 99, 62, 110, 58]  2.1 min
+r2_h64_AB_bs512          B-cv macro-F1 0.8641 ± 0.0011  NearFull 0.915  epochs [38, 121, 38, 120, 99, 94, 38, 100, 37, 129]  2.3 min
+r2_h64_B_cw0             B-cv macro-F1 0.8790 ± 0.0041  NearFull 0.890  epochs [77, 200, 128, 519, 101, 608, 111, 163, 107, 176]  4.5 min

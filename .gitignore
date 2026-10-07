@@ -1,4 +1,3 @@
-@"
 # Large datasets
 LSWMD.pkl/
 LSWMD.pkl.zip
@@ -6,9 +5,20 @@ LSWMD.pkl.zip
 # Large generated training data
 data/X_CNN.pkl
 
-# Large model files
-models/cnn_model.keras
-models/cnn_model_5k.keras
+# Large model files (VGG16 CNNs are ~170 MB each, over GitHub's 100 MB limit)
+models/cnn_*.keras
+
+# Tuning-trial outputs (regenerable with the scripts; every score is in logs/*.jsonl and tuning_log.md).
+# The frozen Stage 1 outputs used by freeze_results.py stay tracked:
+data/*_outputs.pkl
+data/stack_*.pkl
+!data/mfe_x3_cw0_outputs.pkl
+!data/mfe_x3_cw0_s1_outputs.pkl
+!data/mfe_x3_cw0_s2_outputs.pkl
+!data/cnn_imnet_cw0_aug_outputs.pkl
+!data/stack_FINAL_*.pkl
+!data/stack_B1_*.pkl
+!data/stack_final_mlr_A_s0.pkl
 
 # Python
 __pycache__/
@@ -20,4 +30,3 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
-"@ | Out-File -Encoding utf8 .gitignore

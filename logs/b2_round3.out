@@ -1,0 +1,4 @@
+r3_h128_B_cw0_bs128      B-cv macro-F1 0.8782 ± 0.0024  NearFull 0.883  epochs [174, 306, 165, 614, 156, 445, 193, 695, 178, 986]  4.8 min
+r3_h128_B_cw0            B-cv macro-F1 0.8789 ± 0.0024  NearFull 0.883  epochs [77, 279, 58, 297, 78, 200, 78, 463, 107, 176]  5.0 min
+r3_h256_bs512            B-cv macro-F1 0.8744 ± 0.0025  NearFull 0.929  epochs [31, 31, 31, 31, 31, 30, 31, 30, 31, 31]  1.9 min
+r3_h64_B_cw0_f1          B-cv macro-F1 0.8777 ± 0.0036  NearFull 0.889  epochs [57, 83, 44, 40, 87, 64, 46, 40, 74, 54]  2.7 min

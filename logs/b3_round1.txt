@@ -1,0 +1,8 @@
+base
+cw0 cw=0
+cw05 cw=0.5
+relu act=relu
+w256 width=256
+d3 depth=3
+drop02 dropout=0.2
+lr1e-3 lr=1e-3

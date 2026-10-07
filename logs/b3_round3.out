@@ -1,0 +1,6 @@
+x3_cw0           B_val macro-F1 0.8513 ± 0.0074  epochs [62, 47, 52]  5.4 min
+x3_cw0_w512      B_val macro-F1 0.8593 ± 0.0023  epochs [36, 37, 38]  35.5 min
+r3_cw0_w512_bs128 B_val macro-F1 0.8590 ± 0.0095  epochs [58, 46, 61]  11.8 min
+r3_cw0_w512_d3   B_val macro-F1 0.8474 ± 0.0056  epochs [32, 31, 30]  46.1 min
+r3_cw0_w512_lr3e-4 B_val macro-F1 0.8568 ± 0.0079  epochs [32, 31, 32]  16.0 min
+r3_cw0_w1024     B_val macro-F1 0.8506 ± 0.0047  epochs [36, 31, 32]  76.8 min
