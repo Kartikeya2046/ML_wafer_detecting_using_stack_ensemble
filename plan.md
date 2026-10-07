@@ -1,3 +1,6 @@
+> **SUPERSEDED (2026-10-07):** this was the original phase-by-phase reproduction plan. Phases 1–6 are done.
+> Current plans: `implementation_plan.md` (master plan) and `stage2_plan.md`. Status: `context.md` (START HERE block).
+
 # Implementation Plan — Wafer Map Defect Classification (Stacking Ensemble)
 
 Companion to `context.md` — read that first for full background, project history, taken

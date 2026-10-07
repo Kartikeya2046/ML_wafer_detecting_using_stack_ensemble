@@ -1,5 +1,16 @@
 # Project Context — Wafer Map Defect Pattern Classification (VLSI Semester Project)
 
+> ## ▶ START HERE (status as of 2026-10-07)
+> - **Stage 1 (reproduction + tuning) is DONE and FROZEN** — git tag `stage1-frozen`. Our tuned pipeline matches or
+>   beats the paper: Stacking-MLR **0.8967 ± 0.0060** macro-F1 (paper 0.8949 ± 0.0121), tuned Stacking-FNN
+>   **0.9041 ± 0.0028** (paper 0.8991 ± 0.0096). Numbers: `results_comparison.md`. Every trial/decision: `tuning_log.md`.
+> - **Stage 2 (our own contribution) is PLANNED, NOT STARTED:** `stage2_plan.md` was written with the user in a
+>   question-by-question session (16 decisions). **It is awaiting the user's sign-off — do not implement before it.**
+> - **Moving to a new machine?** Read §8 first (large files that are NOT in git, the GPU conda env, path edits).
+> - **Reading order:** this file → `implementation_plan.md` (master plan, Parts A–D) → `stage2_plan.md` →
+>   `tuning_log.md` / `results_comparison.md` as needed. `plan.md` is the original phase plan, superseded (history only).
+> - **How the user wants to work now:** §0 plus the updates in §9 (they override older text where they differ).
+
 This file exists so any AI agent (Claude, ChatGPT, or otherwise) picking up this project
 later has full grounded context. No re-guessing, no re-asking things already answered here.
 Read this file AND the companion `plan.md` fully before doing any work.
@@ -220,27 +231,38 @@ faithful approximation, and flag it as a genuine limitation rather than silently
 than 100% without saying so. This is one of the "approval needed" cases from §0 — surface it
 to the user briefly rather than just quietly settling for less.
 
-**Scope (settled 2026-10-06, implementation_plan.md B0):** the headline numbers are the **full-data N=162,946**
-setting, not N=5000. The earlier N=5000 workaround (files `models/*_5k.keras`) is superseded: the CNN was
-later trained on the full set on the GPU via the conda env `D:\Anaconda3\envs\btp_lstm_gpu` (TF 2.10, the last
-TF with native-Windows GPU; RTX 3050 6GB). Run it with `sh run_gpu.sh <script>` (puts the env's CUDA DLLs on
-PATH) or `sh run_cpu.sh <script>` (same env, CPU only). Headline baseline files: `models/mfe_fnn_model.keras`,
-`models/cnn_model.keras`, `data/mfe_fnn_outputs.pkl`, `data/cnn_outputs.pkl` (all full-data).
-Paper comparison point is therefore Table 7 / Table 8 at N=162,946.
+**Status of the 7 items above (2026-10-07):** 1–6 are done (Stage 1, frozen). Item 7 (report, slides, viva
+one-pager) is implementation_plan.md Part D, after Stage 2.
 
-**Facts verified from journal.pdf (2026-10-06):** 10 replicates, mean ± std, paired t-test. CNN = VGG16 **pre-trained
-on ImageNet** with GAP head (§4.3; both reference repos load pretrained VGG16). Proposed meta-learner = **MLR**
-(ridge regression of one-hot y on both probability vectors, λ=0.1, eq. 5–6); our notebook's 18→10→9 FNN is the
-paper's *Stacking-FNN* baseline. Table 7, N=162,946, F1macro: MFE+FNN 0.8599±0.0117, CNN 0.8679±0.0126,
-MultiNN 0.8455±0.0170, Stacking-DT 0.8789±0.0094, Stacking-FNN 0.8991±0.0096, Stacking-MLR 0.8949±0.0121.
-F1micro: 0.9741, 0.9775, 0.9728, 0.9757, 0.9808, 0.9801 (same order).
+**Scope (settled 2026-10-06):** headline numbers are the **full-data N=162,946** setting (train 162,946 / test 10,000,
+stratified, `random_state=42`, from `phase2_data.py`). The old N=5000 workaround (`models/*_5k.keras`) is superseded:
+the GPU works through the TF 2.10 conda env (see §8). Paper comparison point: Table 7 / Table 8 at N=162,946.
 
-**Stage 1 status (2026-10-07): reproduction + tuning FROZEN** (git tag `stage1-frozen`). Our test macro-F1 now
-matches/exceeds the paper: Stacking-MLR 0.8967 ± 0.0060, Stacking-FNN 0.9041 ± 0.0028, MFE+FNN 0.8572, CNN 0.8777.
-Key fixes vs the first reproduction: (1) stacker trained on in-sample base outputs collapsed rare classes → use the
-paper's MLR meta-learner; (2) class weights hurt every model here (the paper uses none); (3) CNN needs ImageNet init
-(paper §4.3); (4) mixed precision cost ~4 pts on this CNN → train fp32. Details: `tuning_log.md`, `results_comparison.md`.
-Next: Stage 2 (implementation_plan.md Part C) — plan it **with the user** via the grilling skill, not alone.
+**Facts verified from journal.pdf:** 10 replicates (random splits), mean ± std, paired t-test. CNN = VGG16
+**pre-trained on ImageNet** with global-average-pooling head (§4.3; both reference repos load pretrained VGG16).
+Proposed meta-learner = **MLR** (ridge regression of one-hot y on both probability vectors, λ=0.1, eq. 5–6); an
+18→10→9 FNN meta-learner is the paper's *Stacking-FNN* baseline. No class weights are mentioned anywhere.
+Table 7, N=162,946, F1macro: MFE+FNN 0.8599±0.0117, CNN 0.8679±0.0126, MultiNN 0.8455±0.0170,
+Stacking-DT 0.8789±0.0094, Stacking-FNN 0.8991±0.0096, Stacking-MLR 0.8949±0.0121.
+F1micro: 0.9741, 0.9775, 0.9728, 0.9757, 0.9808, 0.9801 (same order). Per-class: Table 8, last block
+(printed there as "162,496"), copied into `freeze_results.py`.
+
+**What Stage 1 found (the story for the report/viva):**
+1. The first reproduction's stacker (Near-full F1 = 0, macro 0.7614) failed because the meta-learner was trained on
+   the base learners' **in-sample** predictions, which are overconfident; it early-stopped after ~23 epochs and
+   ignored rare classes. Class weights only masked it (0.8402 ± 0.0393, very seed-dependent).
+2. **Class weights hurt every model here** (MFE-FNN −5 pts, CNN, both stackers). The paper uses none.
+3. The paper's own **MLR** meta-learner is as good as the best tuned FNN and deterministic → chosen as headline.
+4. The CNN needs **ImageNet initialisation** (paper §4.3) and benefits from **flip/rot90 augmentation**.
+5. **Mixed precision (fp16) and batch 128 cost ~4 pts** on this VGG (no batch-norm) → all final CNN runs are fp32, batch 32.
+6. Frozen pipeline: MFE+FNN (paper arch, no cw) + VGG16 (ImageNet, no cw, aug, fp32) + MLR (α=0.1).
+   Test: Stacking-MLR 0.8967 ± 0.0060, Stacking-FNN 0.9041 ± 0.0028, MFE+FNN 0.8572 ± 0.0062, CNN 0.8777 (1 run).
+7. Limitations: CNN is a single seed and its tuning stopped at the run budget (each round still improved);
+   Near-full has only 9 test wafers (one wafer ≈ 0.01 macro-F1); one fixed split vs the paper's 10.
+
+**Tuning protocol (reused in Stage 2):** A = train[:130356] (base learners fitted here); B = train[130356:]
+(base learners only early-stopped here, so their outputs on B are honest); B split once, stratified, into
+B_fit / B_val (`common.py:splits`). All selection on B; test touched only for final numbers.
 
 ---
 
@@ -273,3 +295,76 @@ Next: Stage 2 (implementation_plan.md Part C) — plan it **with the user** via 
    asks only when truly necessary (per §0), batched progress summaries otherwise, and a
    plain-English viva-prep summary near the end (not deep technical explanation) since the
    user needs to be able to talk about this project, not re-derive it.
+
+---
+
+## 8. Resuming on a new machine / new session (READ THIS when the desktop changes)
+
+**Git** — repo `https://github.com/Kartikeya2046/ML_wafer_detecting_using_stack_ensemble`, branch `main`
+(also `stage1-tuning`; tag `stage1-frozen`). Stage 2 work goes on a new branch `stage2` from `stage1-frozen`.
+
+**Large files that are NOT in git** (GitHub rejects files > 100 MB). Copy these from the old machine (USB/drive),
+keeping the same relative paths inside the project folder:
+
+| File | Size | Needed for | If lost |
+|---|---|---|---|
+| `models/cnn_imnet_cw0_aug.keras` | 169 MB | **Stage 2** (TTA re-predicts with it; Grad-CAM) | retrain: `sh run_gpu.sh cnn_train.py --tag imnet_cw0_aug --imagenet --cw 0 --fp32 --aug` (~2 h on an RTX 3050) |
+| `data/X_CNN.pkl` | 1.35 GB | CNN training/inference (64×64 maps) | regenerate with `phase2_data.py` from LSWMD (~1 h, needs scikit-image) |
+| `LSWMD.pkl.zip` or `LSWMD.pkl/LSWMD.pkl` | 150 MB / 2 GB | only to regenerate data | Kaggle `qingyi/wm811k-wafer-map` (needs the user's login) |
+| other `models/cnn_*.keras` | 169 MB each | not needed (Stage 1 trial models) | — |
+| trial outputs `data/*_outputs.pkl`, `data/stack_*.pkl` not tracked | ~6 MB each | not needed (scores are in `logs/*.jsonl`) | rerun the trial |
+
+Everything else needed — the 59-feature matrix `data/X_MFE.pkl`, labels `data/y.pkl`, the frozen Stage 1 outputs
+(`data/mfe_x3_cw0*_outputs.pkl`, `data/cnn_imnet_cw0_aug_outputs.pkl`, `data/stack_FINAL_*`, `data/stack_B1_*`),
+all scripts, logs and docs — **is in git**. `python freeze_results.py` must reproduce `results_comparison.md` exactly
+on the new machine; run it as the first sanity check.
+
+**Python environments**
+- **GPU env (all training):** conda env `btp_lstm_gpu` — Python 3.10, **tensorflow 2.10.0** (last TF with native-Windows
+  GPU; do not upgrade), conda-forge `cudatoolkit 11.2.2` + `cudnn 8.1.0.77`, numpy 1.26.4, scikit-learn 1.7.2,
+  xgboost 2.1.4, scipy 1.15.3, pandas 2.3.3, matplotlib 3.10. Recreate with:
+  `conda create -n btp_lstm_gpu -c conda-forge python=3.10 cudatoolkit=11.2 cudnn=8.1.0` then
+  `pip install tensorflow==2.10.0 "numpy<2" scikit-learn xgboost scipy pandas matplotlib scikit-image`.
+  Check: `sh run_gpu.sh -c "import tensorflow as tf; print(tf.config.list_physical_devices('GPU'))"`.
+- `run_gpu.sh` / `run_cpu.sh` hard-code the env path `E=/d/Anaconda3/envs/btp_lstm_gpu` — **edit that one line** if
+  conda lives elsewhere. They put `$E/Library/bin` (the CUDA/cuDNN DLLs) on PATH, which TF 2.10 needs.
+- Base Anaconda Python (TF 2.21, CPU only) is fine for `watch_training.py`, `freeze_results.py` and quick analysis,
+  but run all training through `run_gpu.sh` / `run_cpu.sh` so every result comes from the same TF.
+- Old hard-coded paths: `training_pipeline.ipynb` and `phase2_data.py` use `d:\assignment college\VLSI_PROJECT\...`;
+  `logs/cnn_queue*.sh` use `/d/assignment college/VLSI_PROJECT`. The new scripts (`common.py` & co.) use paths
+  relative to the project folder and need no edits.
+
+**Scripts (Stage 1 toolkit)**
+
+| Script | What it does |
+|---|---|
+| `common.py` | splits A / B_fit / B_val, class weights, per-class F1, GPU setup, load/dump helpers |
+| `stack_tune.py NAME key=value…` | stacker trials (FNN or `meta=mlr`), modes A/B/AB, `base_seeds`, `final=1` for test; appends `logs/stack_trials.jsonl` |
+| `mfe_tune.py NAME key=value…` | MFE+FNN trials (fit A, early-stop B_fit, score B_val), saves every seed's outputs; `logs/mfe_trials.jsonl` |
+| `cnn_train.py --tag T [--imagenet] [--cw 0] [--aug] [--plateau] [--fp32] [--batch 32]` | VGG16 CNN on the GPU; index-gather input pipeline (~2 GB RAM); `logs/cnn_T.log/csv` |
+| `freeze_results.py` | rebuilds `results_comparison.md` from saved outputs (no training) |
+| `watch_training.py` | live terminal view of CNN epochs + trial summaries (`python watch_training.py`) |
+
+**Operational lessons (hardware: laptop, RTX 3050 6 GB, 15 GB RAM, 16 threads)**
+- **CNN: always fp32, batch 32** (fp16/batch 128 cost ~4 pts). ~240–260 s/epoch, ~2–3 h per run with patience 20.
+- **Claude Code's memory guard kills background shells** when RAM gets low (it happened 3×). Long GPU jobs must be
+  launched **detached** (PowerShell `Start-Process` on Git `bash.exe` running a queue script — see
+  `logs/cnn_queue5.sh`); the user approved this. Only one CPU tuning job at a time next to a CNN run.
+- The small models (stacker, MFE-FNN) train on CPU (`run_cpu.sh`): they are faster there and leave the GPU to the CNN.
+- Early stopping everywhere = lowest validation loss, patience 20, restore best weights (as in the paper's repo).
+
+---
+
+## 9. Working preferences learned in the 2026-10-06/07 sessions (override older text where they differ)
+
+- **Technical tuning stays autonomous** (§0, §7 still apply): make the defensible choice, log it, keep going.
+- **Plan-level decisions go to the user:** the Stage 2 plan was built with the user via the **grilling skill**
+  (`mattpocock-skills:grilling`, from the `mattpocock-skills` plugin, enabled in `.claude/settings.json`). Do the same
+  for any future plan (e.g. the Part D report structure): ask in numbered rounds with a recommended answer each;
+  the user typically answers "go with your recommendations" but wants to be asked.
+- **Wait for the user's sign-off on `stage2_plan.md` before implementing.**
+- **GPU at full load** for training; the user likes to watch progress live (`watch_training.py`).
+- **Commits:** the user asks for commits with a full explanatory message of everything done; commit at phase
+  boundaries (Stage 1 = commit `4bfadf7`, tag `stage1-frozen`). Push to the GitHub repo above.
+- Give short progress updates while long jobs run; explain choices in plain language when asked
+  (e.g. "why CPU for the small models", "how is the best epoch chosen" — both answered in §8).

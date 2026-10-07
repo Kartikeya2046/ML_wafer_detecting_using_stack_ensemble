@@ -5,8 +5,9 @@ Companion files: `context.md` (background), `plan.md` (original reproduction pla
 Last updated: 2026-10-07.
 
 > **STATUS (2026-10-07): Part B (Stage 1) is DONE and FROZEN** — git tag `stage1-frozen`, branch `stage1-tuning`.
-> Results: `results_comparison.md`; every trial and decision: `tuning_log.md`. Next: Part C — write `stage2_plan.md`
-> **with the user** (run the `mattpocock-skills:grilling` skill first; do not draft it alone).
+> Results: `results_comparison.md`; every trial and decision: `tuning_log.md`.
+> **Part C: `stage2_plan.md` written with the user (grilling session, 16 decisions) — awaiting sign-off before
+> implementation.** It refines the Part C outline below (adds TTA, B-mode stackers, controls, significance tests).
 
 ---
 
