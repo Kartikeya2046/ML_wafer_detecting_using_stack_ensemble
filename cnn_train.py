@@ -14,7 +14,10 @@ ap.add_argument('--plateau', action='store_true'); ap.add_argument("--batch", ty
 ap.add_argument('--fp32', action='store_true'); ap.add_argument('--seed', type=int, default=0); ap.add_argument('--bench', action='store_true')
 ap.add_argument('--imagenet', action='store_true')  # paper 4.3: VGG pre-trained on ImageNet
 ap.add_argument('--cw', type=float, default=1.0)  # class-weight power: 1 balanced, 0 none (paper)
+ap.add_argument('--tta', action='store_true')  # Stage 2 C4: predict only, load models/cnn_<tag>.keras, average the 8 symmetries
 a = ap.parse_args()
+if a.tta:
+    a.imagenet, a.fp32 = True, True  # the frozen CNN is the ImageNet-initialised architecture, inference in fp32
 
 print('GPUs:', gpu_setup(mixed=not a.fp32), flush=True)
 import tensorflow as tf
@@ -25,7 +28,7 @@ def build():
     x = inp = L.Input((64, 64, 1))
     x = L.Lambda(lambda t: tf.repeat(t, 3, axis=-1))(x)
     if a.imagenet:  # same conv stack as below, ImageNet weights
-        x = tf.keras.applications.VGG16(include_top=False, weights='imagenet', input_shape=(64, 64, 3))(x)
+        x = tf.keras.applications.VGG16(include_top=False, weights=None if a.tta else 'imagenet', input_shape=(64, 64, 3))(x)
     for n, f in [] if a.imagenet else [(2, 64), (2, 128), (3, 256), (3, 512), (3, 512)]:
         for _ in range(n):
             x = L.Conv2D(f, 3, padding='same', activation='relu')(x)
@@ -83,6 +86,24 @@ if a.bench:
         t = time.time(); m.fit(d.skip(20), verbose=0); dt = time.time() - t
         print(f'batch {bs:4d} mixed={mp}: {140 / dt:6.1f} steps/s, {140 * bs / dt:7.0f} img/s, '
               f'est epoch(130k) {len(A) / (140 * bs / dt):5.0f}s', flush=True)
+    raise SystemExit
+
+if a.tta:
+    # Rebuild + load_weights: load_model cannot unmarshal the Lambda layer saved under another Python version.
+    model = build()
+    model.load_weights(P('models', f'cnn_{a.tag}.keras'))
+    sym = lambda x, k: tf.image.rot90(tf.reverse(x, [2]) if k >= 4 else x, k % 4)  # the 8 symmetries of the square
+    def tta(src):
+        t, p = time.time(), 0
+        for k in range(8):
+            d = ds(np.arange(src.shape[0]), src).map(lambda x: sym(x, k)).prefetch(tf.data.AUTOTUNE)
+            p += model.predict(d, verbose=0).astype(np.float64)
+        print(f'  {src.shape[0]} wafers x 8: {time.time() - t:.0f}s', flush=True)
+        return (p / 8).astype(np.float32)
+    out = {'train_prob': tta(XT), 'test_prob': tta(XE), 'args': vars(a)}
+    dump(out, f'cnn_{a.tag}_tta_outputs.pkl')
+    ref = ld(f'cnn_{a.tag}_outputs.pkl')['train_prob'][B_val]
+    print(f'[{a.tag}] B_val macro-F1 plain {f1s(y[B_val], ref).mean():.4f} -> TTA {f1s(y[B_val], out["train_prob"][B_val]).mean():.4f}', flush=True)
     raise SystemExit
 
 tf.keras.utils.set_random_seed(a.seed)

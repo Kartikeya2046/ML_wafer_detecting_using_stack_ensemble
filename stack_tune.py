@@ -8,10 +8,13 @@ Usage:  run_cpu.sh stack_tune.py NAME [key=value ...] [final=1]
              AB = fit on A + part of B
     monitor=loss|f1   patience=20   dropout=0   l2=0   seeds=5
     base_seeds=1   >1: repeat with the first input's other seeds (<name>_s1, _s2 ...), i.e. score the stack over base-learner seeds
+                   an input written <name>+k uses seed (b + k) mod base_seeds in round b (e.g. a 2nd MFE seed as 3rd learner)
     meta=fnn|mlr   mlr = paper's proposed meta-learner: ridge regression on one-hot targets, alpha=0.1 (eq. 5)
   Tuning score: 2-fold cross-fit over B (B_fit <-> B_val), predictions pooled over all of B.
   final=1: fit with the full protocol, score on the 10,000 test wafers, save probs.
-Results append to logs/stack_trials.jsonl.
+Results append to logs/stack_trials.jsonl. Saved per (base seed b, seed s): tuning -> pooled B predictions
+data/stack_cv_<NAME>_b<b>_s<s>.pkl (for compare.py / calibrate.py); final -> data/stack_<NAME>_b<b>_s<s>.pkl.
+MLR runs also save the ridge coefficients ('coef', 9 x n_inputs*9 per fit; 2 fits for the 2-fold B-cv).
 """
 import sys, json, time, itertools
 import numpy as np
@@ -30,9 +33,11 @@ A, B_fit, B_val = splits(y)
 
 
 def load_inputs(bs):
-    names = cfg['inputs'].split(',')
-    if bs:
-        names[0] += f'_s{bs}'
+    names = []
+    for i, s in enumerate(cfg['inputs'].split(',')):
+        s, k = s.split('+') if '+' in s else (s, 0 if i == 0 else None)
+        b = None if k is None else (bs + int(k)) % cfg['base_seeds']
+        names.append(s + (f'_s{b}' if b else ''))
     outs = [ld(SRC.get(s, f'{s}_outputs.pkl')) for s in names]
     return (np.hstack([o['train_prob'] for o in outs]).astype(np.float32),
             np.hstack([o['test_prob'] for o in outs]).astype(np.float32))
@@ -63,6 +68,7 @@ def fit_predict(fit_idx, es_idx, Xp, seed):
         from sklearn.linear_model import Ridge
         w = class_weights(y[fit_idx], cfg['cw'])
         r = Ridge(alpha=cfg['alpha'], fit_intercept=False).fit(X[fit_idx], oh(y[fit_idx]), sample_weight=np.array([w[c] for c in y[fit_idx]]))
+        coefs.append(r.coef_.astype(np.float32))
         return r.predict(Xp), 0
     tf.keras.utils.set_random_seed(seed)
     reg = tf.keras.regularizers.l2(cfg['l2']) if cfg['l2'] else None
@@ -90,17 +96,19 @@ def plan(held):
 t0, rows, eps = time.time(), [], []
 for bs, seed in itertools.product(range(cfg['base_seeds']), range(cfg['seeds'])):
     X, Xt = load_inputs(bs)
+    coefs = []
     if cfg['final']:
         fi, ei = plan(np.concatenate([B_fit, B_val]))
         p, ep = fit_predict(fi, ei, Xt, seed); yy = yt
         rows.append(f1s(yt, p)); eps.append(ep)
-        dump({'test_prob': p, 'cfg': cfg}, f'stack_{name}_b{bs}_s{seed}.pkl')
+        dump({'test_prob': p, 'cfg': cfg, 'coef': coefs}, f'stack_{name}_b{bs}_s{seed}.pkl')
     else:
         pool = np.zeros((len(y), 9), np.float32)
         for h1, h2 in [(B_fit, B_val), (B_val, B_fit)]:
             fi, ei = plan(h1)
             pool[h2], ep = fit_predict(fi, ei, X[h2], seed); eps.append(ep)
         rows.append(f1s(y[CUT:], pool[CUT:]))
+        dump({'B_prob': pool[CUT:], 'cfg': cfg, 'coef': coefs}, f'stack_cv_{name}_b{bs}_s{seed}.pkl')
 F = np.array(rows); mac = F.mean(1)
 rec = dict(name=name, cfg=cfg, macro_mean=mac.mean(), macro_std=mac.std(), macro_seeds=mac.tolist(),
            per_class=F.mean(0).tolist(), epochs=eps, minutes=(time.time() - t0) / 60)

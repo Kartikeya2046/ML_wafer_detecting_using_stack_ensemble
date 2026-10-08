@@ -1,7 +1,8 @@
 # Stage 2 Plan — Original Contribution (implementation_plan.md Part C)
 
 **Status:** written 2026-10-07 from a question-by-question design session with the user (grilling skill, 16 decisions,
-all settled — see "Decision record" at the bottom). **Awaiting the user's sign-off. Do not implement anything before it.**
+all settled — see "Decision record" at the bottom). **Signed off 2026-10-08 and implemented the same day** (branch `stage2`).
+Results: `extensions_results.md`; deviations from this plan are listed in `tuning_log.md` "Stage 2".
 
 **Goal:** a *stronger and more trustworthy* stack on top of the frozen Stage 1 pipeline:
 accuracy (C4 test-time augmentation, C1 third base learner) + reliability (C2 calibration and reject option) +

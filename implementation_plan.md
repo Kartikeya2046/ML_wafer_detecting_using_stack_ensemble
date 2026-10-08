@@ -2,12 +2,12 @@
 
 Paper: Kang & Kang 2021, *Computers in Industry* 129:103450 (stacking ensemble of handcrafted-feature FNN + VGG-style CNN for WM-811K wafer map classification).
 Companion files: `context.md` (background), `plan.md` (original reproduction plan, phases 0–7).
-Last updated: 2026-10-07.
+Last updated: 2026-10-08.
 
 > **STATUS (2026-10-07): Part B (Stage 1) is DONE and FROZEN** — git tag `stage1-frozen`, branch `stage1-tuning`.
 > Results: `results_comparison.md`; every trial and decision: `tuning_log.md`.
-> **Part C: `stage2_plan.md` written with the user (grilling session, 16 decisions) — awaiting sign-off before
-> implementation.** It refines the Part C outline below (adds TTA, B-mode stackers, controls, significance tests).
+> **STATUS (2026-10-08): Part C (Stage 2) is DONE** on branch `stage2` (user signed off `stage2_plan.md`). Results:
+> `extensions_results.md`; log: `tuning_log.md` "Stage 2". **Next: Part D** (plan the report structure with the user first).
 
 ---
 
@@ -116,6 +116,8 @@ Do not start until Part B is frozen. First step of Part C is to write `stage2_pl
 - Explainability: Grad-CAM on the CNN, SHAP on the 59 features, to show why the stacker favours one learner for particular classes.
 
 **Deliverable of Part C:** `stage2_plan.md` (approved), `extensions_results.md`, `reject_curve.png`, a clearly labelled "our extensions" section for the report.
+
+**Part C outcome (2026-10-08):** all of C1–C4 done incl. the optional Grad-CAM and SHAP. Final pipelines (chosen on B): MLR = MFE-FNN + CNN-TTA (test 0.9051 ± 0.0069), FNN = MFE-FNN + CNN-TTA + XGB (test 0.9070 ± 0.0037). TTA passes the inclusion rule for both stackers; XGB as third learner only for FNN, and never significantly beats a second MFE-FNN seed (control B); XGB replacing the MFE-FNN (control A) is the best MLR stack (test 0.9160). Reject option: 95% coverage → accuracy 99.6%, macro-F1 0.979. Temperature scaling does not help the MLR. Figures in `figures/`.
 
 ---
 

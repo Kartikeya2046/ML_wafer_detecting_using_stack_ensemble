@@ -31,3 +31,16 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+# Stage 2 outputs used by extensions_results.py / compare.py / calibrate.py stay tracked
+# (the 60 XGB-selection stacks S3sel_* are not: their scores are in logs/stack_trials.jsonl):
+!data/mfe_cw0_5s*_outputs.pkl
+!data/cnn_imnet_cw0_aug_tta_outputs.pkl
+!data/xgb_d6_lr05_cw1_outputs.pkl
+!data/stack_S2_*.pkl
+!data/stack_S2tta_*.pkl
+!data/stack_S3_*.pkl
+!data/stack_ctl*.pkl
+!data/stack_cv_S2_*.pkl
+!data/stack_cv_S2tta_*.pkl
+!data/stack_cv_S3_*.pkl
+!data/stack_cv_ctl*.pkl

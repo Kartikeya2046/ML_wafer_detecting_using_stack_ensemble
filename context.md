@@ -1,14 +1,17 @@
 # Project Context — Wafer Map Defect Pattern Classification (VLSI Semester Project)
 
-> ## ▶ START HERE (status as of 2026-10-07)
+> ## ▶ START HERE (status as of 2026-10-08)
 > - **Stage 1 (reproduction + tuning) is DONE and FROZEN** — git tag `stage1-frozen`. Our tuned pipeline matches or
 >   beats the paper: Stacking-MLR **0.8967 ± 0.0060** macro-F1 (paper 0.8949 ± 0.0121), tuned Stacking-FNN
 >   **0.9041 ± 0.0028** (paper 0.8991 ± 0.0096). Numbers: `results_comparison.md`. Every trial/decision: `tuning_log.md`.
-> - **Stage 2 (our own contribution) is PLANNED, NOT STARTED:** `stage2_plan.md` was written with the user in a
->   question-by-question session (16 decisions). **It is awaiting the user's sign-off — do not implement before it.**
-> - **Moving to a new machine?** Read §8 first (large files that are NOT in git, the GPU conda env, path edits).
+> - **Stage 2 (our own contribution) is DONE** (user signed off 2026-10-08), branch `stage2`. Results: `extensions_results.md`
+>   (built by `extensions_results.py`). Final pipelines chosen on B: MLR = MFE-FNN + CNN-TTA, test **0.9051 ± 0.0069**;
+>   FNN = MFE-FNN + CNN-TTA + XGB, test **0.9070 ± 0.0037**. TTA helps; XGB as 3rd learner is mixed (MLR Stack-3 0.9149 on
+>   test but rejected on B); XGB replacing the MFE-FNN is best (0.9160); reject option: 95% coverage → 99.6% accuracy.
+> - **Next: Part D** (report, slides, viva one-pager) in `implementation_plan.md` — plan it with the user first (§9).
+> - **Machine:** since 2026-10-08 the project runs on a Linux workstation (§8, "Linux workstation"). Old Windows notes kept.
 > - **Reading order:** this file → `implementation_plan.md` (master plan, Parts A–D) → `stage2_plan.md` →
->   `tuning_log.md` / `results_comparison.md` as needed. `plan.md` is the original phase plan, superseded (history only).
+>   `extensions_results.md` / `tuning_log.md` / `results_comparison.md` as needed. `plan.md` is superseded (history only).
 > - **How the user wants to work now:** §0 plus the updates in §9 (they override older text where they differ).
 
 This file exists so any AI agent (Claude, ChatGPT, or otherwise) picking up this project
@@ -319,7 +322,18 @@ Everything else needed — the 59-feature matrix `data/X_MFE.pkl`, labels `data/
 all scripts, logs and docs — **is in git**. `python freeze_results.py` must reproduce `results_comparison.md` exactly
 on the new machine; run it as the first sanity check.
 
-**Python environments**
+**Linux workstation (current, since 2026-10-08)** — Ubuntu 24.04, RTX 4000 Ada 20 GB, 24 cores, 125 GB RAM, Python 3.12.
+- Env: project venv `.venv` (not in git), created by `sh setup_env.sh`: TF 2.17.1 + `tf_keras` 2.17 (pip CUDA 12.3 /
+  cuDNN 8.9). `run_gpu.sh` / `run_cpu.sh` pick `.venv` automatically and set `TF_USE_LEGACY_KERAS=1` (tf.keras = Keras 2).
+  `setup_env.sh` also patches a tf_keras + Python 3.12 bug (`randint(1, 1e9)` TypeError after `set_random_seed`).
+- Large files live at the paths in the table above (`data/X_CNN.pkl`, `models/cnn_imnet_cw0_aug.keras`, `LSWMD.pkl/LSWMD.pkl`).
+- **Load the CNN with rebuild + `load_weights`, never `load_model`** — its Lambda layer was saved as Python 3.10 bytecode
+  ("bad marshal data" under 3.12). `cnn_train.py --tta` and `gradcam.py` do this.
+- Equivalence verified: `freeze_results.py` zero diff; CNN re-predicts test within 1.2e-4; MFE-FNN seeds reproduce exactly.
+- Speed: CNN TTA over all 173k wafers × 8 in 4.4 min; MFE-FNN 5 seeds 5 min; XGB config ~1 min. `run_cpu.sh` defaults to
+  cores/4 threads per job so ~4 CPU jobs run side by side; the memory guard / detached-launch notes below were laptop issues.
+
+**Python environments (old Windows laptop)**
 - **GPU env (all training):** conda env `btp_lstm_gpu` — Python 3.10, **tensorflow 2.10.0** (last TF with native-Windows
   GPU; do not upgrade), conda-forge `cudatoolkit 11.2.2` + `cudnn 8.1.0.77`, numpy 1.26.4, scikit-learn 1.7.2,
   xgboost 2.1.4, scipy 1.15.3, pandas 2.3.3, matplotlib 3.10. Recreate with:
@@ -333,6 +347,11 @@ on the new machine; run it as the first sanity check.
 - Old hard-coded paths: `training_pipeline.ipynb` and `phase2_data.py` use `d:\assignment college\VLSI_PROJECT\...`;
   `logs/cnn_queue*.sh` use `/d/assignment college/VLSI_PROJECT`. The new scripts (`common.py` & co.) use paths
   relative to the project folder and need no edits.
+
+**Stage 2 scripts** (on top of the Stage 1 toolkit below): `xgb_tune.py` (XGB base learner, fit A / early-stop B_fit),
+`compare.py X Y [test=1]` (paired t-test + wafer bootstrap), `calibrate.py NAME` (temperature + reject option),
+`mlr_weights.py`, `gradcam.py`, `shap_xgb.py`, `extensions_results.py` (rebuilds `extensions_results.md`), `cnn_train.py --tta`.
+Figures in `figures/`.
 
 **Scripts (Stage 1 toolkit)**
 

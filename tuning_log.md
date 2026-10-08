@@ -188,3 +188,58 @@ Plateau schedule does not help (stack 0.8921 < 0.8961 for imnet_cw0); its higher
 **Final test results** (results_comparison.md, built by `freeze_results.py`): Stacking-MLR **0.8967 ± 0.0060** (paper 0.8949 ± 0.0121), Stacking-FNN **0.9041 ± 0.0028** (paper 0.8991 ± 0.0096), MFE+FNN 0.8572 ± 0.0062 (paper 0.8599), CNN 0.8777 (single run; paper 0.8679). Reference baseline B1 was 0.8402 ± 0.0393.
 
 Frozen artefacts: `data/mfe_x3_cw0[_s1,_s2]_outputs.pkl`, `data/cnn_imnet_cw0_aug_outputs.pkl`, `models/cnn_imnet_cw0_aug.keras`, `data/stack_FINAL_stack_{mlr,fnn}_*.pkl`. Git tag `stage1-frozen`.
+
+---
+
+# Stage 2 (stage2_plan.md, implementation_plan.md Part C) — 2026-10-08, branch `stage2`
+
+Machine: Linux workstation (RTX 4000 Ada 20 GB, 24 cores, 125 GB RAM), `.venv` TF 2.17.1 + tf_keras 2.17 (`setup_env.sh`).
+Equivalence with the Stage 1 laptop checked first: `freeze_results.py` reproduces `results_comparison.md` with zero diff;
+the frozen CNN (rebuilt + `load_weights`, since `load_model` cannot unmarshal its Lambda layer across Python versions)
+re-predicts test within 1.2e-4 (macro-F1 0.8777); MFE-FNN seeds 0–2 reproduce `x3_cw0` exactly (0.8442 / 0.8481 / 0.8616).
+Independent jobs ran side by side (GPU: TTA, Grad-CAM; CPU: MFE seeds, XGB grid ×4, up to 10 stacker trials at once).
+All scores: `logs/stack_trials.jsonl`, `logs/xgb_trials.jsonl`, `logs/compare.jsonl`, `logs/calibrate.jsonl`.
+Full tables: `extensions_results.md` (built by `extensions_results.py`).
+
+## Step 0 — prerequisites
+- `mfe_tune.py cw0_5s cw=0 seeds=5` (frozen config, 5 seeds): B_val 0.8525 ± 0.0074, seeds [0.8442, 0.8481, 0.8616, 0.8613, 0.8474], 5.3 min.
+- `stack_tune.py`: saves pooled B predictions (`data/stack_cv_<name>_b*_s*.pkl`) and MLR coefficients; inputs may be written
+  `<name>+k` (seed b+k in round b, used by control B). New `compare.py` (paired t-test + wafer bootstrap).
+- **Deviation:** FNN stackers use `base_seeds=5 seeds=1` (n = 5, paired with MLR by MFE seed) instead of 5×5 = 25 runs per trial.
+- Stack-2 B-mode baselines: MLR 0.9030 ± 0.0034, FNN 0.8971 ± 0.0034.
+
+## Step 1 — C4 TTA
+`cnn_train.py --tag imnet_cw0_aug --tta` (8 symmetries, all train + test, 4.4 min on GPU). CNN alone B_val 0.8723 → 0.8797.
+Stack: MLR +0.0044 (p 0.011, > std 0.0034) **pass**; FNN +0.0061 (p 0.009, CI [+0.001, +0.012]) **pass** → TTA CNN used from here on.
+
+## Step 2 — C1 XGB third learner
+`xgb_tune.py` 12-config grid (depth {4,6,8} × lr {0.05,0.1} × cw {0,1}), 4 at a time, ~4 min total. **Deviation:** the plan said
+~20 configs; its listed factors give 12. Selected by Stack-3 **MLR** B score (deterministic, instant): `d6_lr05_cw1`
+(Stack-3 0.9105; also the best standalone, 0.8704). Class weights help XGB, unlike the neural nets.
+- Stack-3 vs Stack-2+TTA: MLR +0.0031 (p 0.20, < std 0.0045) **fail**; FNN +0.0050 (p 0.019, > std 0.0041) **pass**.
+- Control B (2nd MFE seed as 3rd learner): Stack-3 − ctlB = +0.0011 (MLR), +0.0023 (FNN), both n.s. → "diversity helps" not supported.
+- Control A (XGB replaces MFE-FNN): MLR 0.9123 (best MLR on B), FNN 0.9017 ± 0.0007.
+- A first `ctlA_fnn` run got `seeds=1` by mistake (shared argument string); rerun with 5 seeds, the 1-seed record is superseded.
+
+## Step 5 — freeze on B (inclusion rule applied per stacker)
+MLR (headline): MFE-FNN + CNN-TTA. FNN: MFE-FNN + CNN-TTA + XGB(d6_lr05_cw1). Both B mode, cw 0, MLR α 0.1, FNN h64.
+
+## Step 6 — single test evaluation (all compared configs, `final=1`)
+MLR: S2 0.9005, **S2tta 0.9051 ± 0.0069 (final)**, S3 0.9149, ctlA 0.9160, ctlB 0.9059.
+FNN: S2 0.9004, S2tta 0.9067, **S3 0.9070 ± 0.0037 (final)**, ctlA 0.9130, ctlB 0.9029.
+The B rule rejected Stack-3 for MLR, which scores higher on test (+0.0098, p 0.057, CI includes 0; Near-full 9 wafers
+carry most of it). Reported, not switched after seeing test.
+
+## Step 3 — C2 calibration + reject (`calibrate.py`, thresholds chosen on B)
+- T ≈ 0.136 (MLR), ≈ 1.03 (FNN). Test ECE: MLR 0.0044 (clipped ridge) → 0.0074 (worse: negative result); FNN 0.0056 → 0.0047.
+- Fixed during the run: macro-F1 on accepted wafers averaged absent classes as 0; "before" for MLR was a softmax of ridge
+  scores (ECE 0.73, meaningless) → now ridge outputs clipped to [0, 1] and renormalised.
+- MLR final: 95% coverage → acc 0.9961, macro-F1 0.9791; 90% → 0.9993 / 0.9951. FNN B thresholds do not transfer below
+  ~86% test coverage (confidence scale shifts between the 2-fold and final stacker fits).
+
+## Step 4 — C3 explainability
+`mlr_weights.py` (handcrafted learner carries Random/Near-full; CNN the spatial classes; XGB takes Near-full in Stack-3),
+`gradcam.py` (block4_conv3), `shap_xgb.py` (exact TreeSHAP; refit matches saved XGB probs exactly).
+
+## Environment fixes made along the way
+- tf_keras 2.17 + Python 3.12: `randint(1, 1e9)` TypeError after `set_random_seed` → patched in the venv (`setup_env.sh`).

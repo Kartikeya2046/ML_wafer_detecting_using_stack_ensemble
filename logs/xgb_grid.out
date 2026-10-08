@@ -1,0 +1,12 @@
+d4_lr1_cw0           B_val macro-F1 0.8607  NearFull 0.933  trees 473  0.5 min
+d4_lr05_cw0          B_val macro-F1 0.8665  NearFull 0.933  trees 992  0.9 min
+d6_lr05_cw0          B_val macro-F1 0.8602  NearFull 0.933  trees 442  0.6 min
+d4_lr1_cw1           B_val macro-F1 0.8695  NearFull 0.968  trees 1564  1.4 min
+d6_lr1_cw0           B_val macro-F1 0.8596  NearFull 0.933  trees 209  0.4 min
+d8_lr05_cw0          B_val macro-F1 0.8532  NearFull 0.933  trees 259  0.6 min
+d6_lr1_cw1           B_val macro-F1 0.8667  NearFull 0.968  trees 589  0.9 min
+d6_lr05_cw1          B_val macro-F1 0.8704  NearFull 0.968  trees 1260  1.7 min
+d8_lr1_cw0           B_val macro-F1 0.8536  NearFull 0.933  trees 125  0.3 min
+d4_lr05_cw1          B_val macro-F1 0.8675  NearFull 0.968  trees 3187  2.9 min
+d8_lr1_cw1           B_val macro-F1 0.8645  NearFull 0.968  trees 314  0.5 min
+d8_lr05_cw1          B_val macro-F1 0.8674  NearFull 0.968  trees 688  1.1 min
