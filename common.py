@@ -42,8 +42,11 @@ def splits(y):
 
 def class_weights(y, power=1.0):
     """power=1 balanced, 0.5 sqrt-balanced, 0 none."""
-    w = compute_class_weight('balanced', classes=np.arange(9), y=y) ** power
-    return dict(enumerate(w))
+    if power == 0:  # no class weights (the frozen recipe); also safe when a small subset misses a class
+        return {c: 1.0 for c in range(9)}
+    present = np.unique(y)
+    w = dict(zip(present, compute_class_weight('balanced', classes=present, y=y) ** power))
+    return {c: w.get(c, 1.0) for c in range(9)}
 
 
 def f1s(y, prob):
@@ -58,3 +61,11 @@ def gpu_setup(mixed=False):
     if mixed:
         tf.keras.mixed_precision.set_global_policy('mixed_float16')
     return tf.config.list_physical_devices('GPU')
+
+
+def subset(n, rep):
+    """Training-size sweep (paper 4.2: N in {500, 5000, 50000}): a random sample of n training wafers for replicate rep,
+    split 80/20 into (fit, es) - fit for backpropagation, es for early stopping, as in the paper."""
+    idx = np.random.default_rng(1000 * rep + 7).choice(N_TRAIN, n, replace=False)
+    k = int(0.8 * n)
+    return np.sort(idx[:k]), np.sort(idx[k:])

@@ -65,6 +65,11 @@ XGBoost fitted on A, early-stopped (number of trees) on B_fit, `tree_method=hist
 | d4_lr05_cw1 | 3187 | 0.8675 | 0.9074 ± 0.0024 |
 | d8_lr1_cw0 | 125 | 0.8536 | 0.9073 ± 0.0016 |
 | d8_lr05_cw0 | 259 | 0.8532 | 0.9072 ± 0.0013 |
+| d6_lr05_cw1_bag_s0 | 1155 | 0.8745 | — |
+| d6_lr05_cw1_bag_s3 | 1163 | 0.8766 | — |
+| d6_lr05_cw1_bag_s1 | 1218 | 0.8726 | — |
+| d6_lr05_cw1_bag_s2 | 1149 | 0.8751 | — |
+| d6_lr05_cw1_bag_s4 | 1151 | 0.8752 | — |
 
 Selecting the best of 12 configs on the same B score inflates its B number slightly (winner's curse); the test evaluation is unaffected.
 
@@ -101,6 +106,7 @@ Temperature T fitted per run by log-loss on the stacker's pooled 2-fold B predic
 | S3_fnn | 1.029 | 0.0062 ± 0.0003 | 0.0054 ± 0.0003 | 0.0046 ± 0.0002 | 0.0039 ± 0.0003 |
 | S3_mlr | 0.136 | 0.0039 ± 0.0003 | 0.0074 ± 0.0001 | 0.0061 ± 0.0001 | 0.0052 ± 0.0002 |
 | ctlA_mlr | 0.136 | 0.0032 ± 0.0000 | 0.0076 ± 0.0000 | 0.0052 ± 0.0000 | 0.0051 ± 0.0000 |
+| e5_ctlA_mlr | 0.133 | 0.0041 ± 0.0000 | 0.0070 ± 0.0000 | 0.0059 ± 0.0000 | 0.0048 ± 0.0000 |
 
 **Reject option — S2tta_mlr (final MLR pipeline), test set:**
 
@@ -200,9 +206,53 @@ Handcrafted features dominate **Random** and **Near-full** (global density patte
 | None | 8524 | 0.9922 | 0.9924 | 0.9927 | 0.9927 | 0.9926 |
 | **Macro** | | **0.8967** | **0.9051** | **0.9149** | **0.9041** | **0.9070** |
 
-## 7. Limitations
+## 7. Stage 2b — best-results pipeline (CNN seed ensemble) and the missing paper baselines
 
-- One CNN seed (both stages); its seed variance is not in any std above. The wafer bootstrap covers test-sampling noise.
+After Stage 2 the test set had been seen once; Stage 2b still selects on B only, but this is a second look at test.
+
+**CNN seeds** (same recipe, seeds 0–4; seed 0 = the Stage 1 frozen CNN, trained on the laptop / TF 2.10):
+
+| CNN | B_val plain | B_val TTA | Test TTA |
+|---|---|---|---|
+| seed 0 | 0.8723 | 0.8797 | 0.8781 |
+| seed 1 | 0.8850 | 0.9053 | 0.8879 |
+| seed 2 | 0.8974 | 0.9143 | 0.8948 |
+| seed 3 | 0.8858 | 0.8987 | 0.8883 |
+| seed 4 | 0.8802 | 0.8933 | 0.9129 |
+| mean ± std | | 0.8983 ± 0.0116 | 0.8924 ± 0.0116 |
+| **5-seed ensemble** | | **0.9221** | **0.9126** |
+
+Best validation losses are nearly equal across seeds (0.053–0.054), yet macro-F1 varies by ±0.012: the rare classes swing between seeds. Averaging the seeds removes most of that variance.
+
+| Stack (CNN = 5-seed TTA ensemble) | stacker | B-cv macro-F1 | n | Test macro-F1 |
+|---|---|---|---|---|
+| MFE-FNN + CNN×5 | MLR | 0.9165 ± 0.0057 | 5 | 0.9075 ± 0.0054 |
+| MFE-FNN + CNN×5 | FNN | 0.9089 ± 0.0036 | 5 | 0.9095 ± 0.0029 |
+| MFE-FNN + CNN×5 + XGB | MLR | 0.9182 ± 0.0039 | 5 | 0.9125 ± 0.0015 |
+| MFE-FNN + CNN×5 + XGB | FNN | 0.9145 ± 0.0041 | 5 | 0.9065 ± 0.0034 |
+| CNN×5 + XGB ← **final (best on B)** | MLR | 0.9223 ± 0.0000 | 1 | 0.9134 ± 0.0000 |
+| CNN×5 + XGB | FNN | 0.9097 ± 0.0022 | 5 | 0.9092 ± 0.0023 |
+
+| Comparison | set | diff | paired t-test p | bootstrap 95% CI |
+|---|---|---|---|---|
+| CNN×5 + XGB − CNN×1 + XGB (MLR) | B | +0.0100 | — | [+0.0030, +0.0178] |
+| MFE + CNN×5 − MFE + CNN×1 (MLR) | B | +0.0090 | 0.050 | [+0.0023, +0.0157] |
+| final stack − CNN×5 alone (B_val) | B | +0.0027 | — | [-0.0120, +0.0178] |
+| MFE + CNN×5 + XGB − CNN×5 alone (B_val) | B | -0.0062 | — | [-0.0175, +0.0036] |
+| without MFE-FNN − with MFE-FNN (MLR) | B | +0.0041 | — | [-0.0026, +0.0117] |
+| final − Stage 1 headline | test | +0.0168 | — | [+0.0004, +0.0399] |
+| final − Stage 2 MLR final | test | +0.0083 | — | [-0.0079, +0.0292] |
+| final − CNN×1 + XGB | test | -0.0025 | — | [-0.0143, +0.0091] |
+
+**Final pipeline: CNN×5 (TTA) + XGB → MLR — test macro-F1 0.9134, accuracy 0.9821.** Reject option at 95% target: 95.2% auto-classified at accuracy 0.9972, macro-F1 0.9861. Runnable from saved models: `predict.py` (reproduces the test scores within 7e-5, identical classes).
+
+Findings: (1) the CNN seed ensemble is the largest single gain of the project on B (+0.009 to +0.010, CI excludes 0); (2) once the CNN is this strong, **the paper's MFE-FNN no longer helps** - adding it is below the CNN ensemble alone on B_val; the handcrafted features still help through XGB, slightly; (3) on test the single-CNN version of the final stack (0.9160) and the ensemble (0.9134) are within noise (CI [−0.014, +0.009]); the ensemble was chosen on B.
+
+**Paper baselines added:** Stacking-DT (paper protocol, fitted on A): test 0.8782 ± 0.0065 (paper 0.8789 ± 0.0094). MultiNN (single run, our CNN recipe + the 59 features): B_val 0.8994, test 0.8880 (paper 0.8455 ± 0.0170). Training-size sweep: `nsweep_results.md`.
+
+## 8. Limitations
+
+- Stages 1–2: one CNN seed (Stage 2b adds 4 more: seed std ±0.012 macro-F1). The wafer bootstrap covers test-sampling noise.
 - Near-full has 9 test wafers (30 in B): one wafer ≈ 0.01 macro-F1, and several test differences above are mostly Near-full.
 - One fixed stratified split (the paper averages 10 random splits).
 - Stage 2 stackers are fitted on B only (honest base outputs, 26k wafers) while the Stage 1 headline MLR was fitted on A; the like-for-like Stage 2 baseline is Stack-2 in B mode.

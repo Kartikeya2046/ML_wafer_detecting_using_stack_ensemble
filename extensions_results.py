@@ -248,10 +248,72 @@ for c in range(9):
 w('| **Macro** | | ' + ' | '.join(f"**{r['macro_mean']:.4f}**" for r in cols) + ' |')
 w('')
 
-# ---------------- limitations ----------------
-w('## 7. Limitations')
+# ---------------- Stage 2b ----------------
+w('## 7. Stage 2b — best-results pipeline (CNN seed ensemble) and the missing paper baselines')
 w('')
-w('- One CNN seed (both stages); its seed variance is not in any std above. The wafer bootstrap covers test-sampling noise.')
+w('After Stage 2 the test set had been seen once; Stage 2b still selects on B only, but this is a second look at test.')
+w('')
+w('**CNN seeds** (same recipe, seeds 0–4; seed 0 = the Stage 1 frozen CNN, trained on the laptop / TF 2.10):')
+w('')
+w('| CNN | B_val plain | B_val TTA | Test TTA |')
+w('|---|---|---|---|')
+seeds = ['cnn_imnet_cw0_aug'] + [f'cnn_imnet_cw0_aug_s{s}' for s in range(1, 5)]
+bv, te = [], []
+for k, s in enumerate(seeds):
+    o, t = ld(f'{s}_outputs.pkl'), ld(f'{s}_tta_outputs.pkl')
+    bv.append(f1s(y[B_val], t['train_prob'][B_val]).mean()); te.append(f1s(yt, t['test_prob']).mean())
+    w(f"| seed {k} | {f1s(y[B_val], o['train_prob'][B_val]).mean():.4f} | {bv[-1]:.4f} | {te[-1]:.4f} |")
+w(f'| mean ± std | | {np.mean(bv):.4f} ± {np.std(bv):.4f} | {np.mean(te):.4f} ± {np.std(te):.4f} |')
+e5 = ld('cnn_ens5_tta_outputs.pkl')
+w(f"| **5-seed ensemble** | | **{f1s(y[B_val], e5['train_prob'][B_val]).mean():.4f}** | **{f1s(yt, e5['test_prob']).mean():.4f}** |")
+w('')
+w('Best validation losses are nearly equal across seeds (0.053–0.054), yet macro-F1 varies by ±0.012: the rare classes '
+  'swing between seeds. Averaging the seeds removes most of that variance.')
+w('')
+w('| Stack (CNN = 5-seed TTA ensemble) | stacker | B-cv macro-F1 | n | Test macro-F1 |')
+w('|---|---|---|---|---|')
+for k, lab in [('e5_S2', 'MFE-FNN + CNN×5'), ('e5_S3', 'MFE-FNN + CNN×5 + XGB'), ('e5_ctlA', 'CNN×5 + XGB')]:
+    for meta in ['mlr', 'fnn']:
+        b, t = TR[f'{k}_{meta}', 0], TR[f'{k}_{meta}', 1]
+        star = ' ← **final (best on B)**' if (k, meta) == ('e5_ctlA', 'mlr') else ''
+        w(f'| {lab}{star} | {meta.upper()} | {ms(b)} | {n(b)} | {ms(t)} |')
+w('')
+w('| Comparison | set | diff | paired t-test p | bootstrap 95% CI |')
+w('|---|---|---|---|---|')
+for a, b, test, lab in [('e5_ctlA_mlr', 'ctlA_mlr', 0, 'CNN×5 + XGB − CNN×1 + XGB (MLR)'),
+                        ('e5_S2_mlr', 'S2tta_mlr', 0, 'MFE + CNN×5 − MFE + CNN×1 (MLR)'),
+                        ('e5_ctlA_mlr', 'out:cnn_ens5_tta', 0, 'final stack − CNN×5 alone (B_val)'),
+                        ('e5_S3_mlr', 'out:cnn_ens5_tta', 0, 'MFE + CNN×5 + XGB − CNN×5 alone (B_val)'),
+                        ('e5_ctlA_mlr', 'e5_S3_mlr', 0, 'without MFE-FNN − with MFE-FNN (MLR)'),
+                        ('e5_ctlA_mlr', 'FINAL_stack_mlr', 1, 'final − Stage 1 headline'),
+                        ('e5_ctlA_mlr', 'S2tta_mlr', 1, 'final − Stage 2 MLR final'),
+                        ('e5_ctlA_mlr', 'ctlA_mlr', 1, 'final − CNN×1 + XGB')]:
+    d, p, ci = cmp(a, b, test)
+    w(f"| {lab} | {'test' if test else 'B'} | {d} | {p} | {ci} |")
+w('')
+c = CAL['e5_ctlA_mlr']
+t95 = [t for t in c['table'] if t['target'] == 0.95][0]
+w(f"**Final pipeline: CNN×5 (TTA) + XGB → MLR — test macro-F1 {TR['e5_ctlA_mlr', 1]['macro_mean']:.4f}, accuracy "
+  f"{acc_of('e5_ctlA_mlr')}.** Reject option at 95% target: {t95['coverage'][0]:.1%} auto-classified at accuracy "
+  f"{t95['acc'][0]:.4f}, macro-F1 {t95['macro'][0]:.4f}. Runnable from saved models: `predict.py` (reproduces the test "
+  'scores within 7e-5, identical classes).')
+w('')
+w('Findings: (1) the CNN seed ensemble is the largest single gain of the project on B (+0.009 to +0.010, CI excludes 0); '
+  '(2) once the CNN is this strong, **the paper\'s MFE-FNN no longer helps** - adding it is below the CNN ensemble alone '
+  'on B_val; the handcrafted features still help through XGB, slightly; (3) on test the single-CNN version of the final '
+  'stack (0.9160) and the ensemble (0.9134) are within noise (CI [−0.014, +0.009]); the ensemble was chosen on B.')
+w('')
+mn = ld('cnn_multinn_outputs.pkl')
+w(f"**Paper baselines added:** Stacking-DT (paper protocol, fitted on A): test {ms(TR['FINAL_stack_dt', 1])} "
+  f"(paper 0.8789 ± 0.0094). MultiNN (single run, our CNN recipe + the 59 features): B_val "
+  f"{f1s(y[B_val], mn['train_prob'][B_val]).mean():.4f}, test {f1s(yt, mn['test_prob']).mean():.4f} (paper 0.8455 ± 0.0170). "
+  'Training-size sweep: `nsweep_results.md`.')
+w('')
+
+# ---------------- limitations ----------------
+w('## 8. Limitations')
+w('')
+w('- Stages 1–2: one CNN seed (Stage 2b adds 4 more: seed std ±0.012 macro-F1). The wafer bootstrap covers test-sampling noise.')
 w('- Near-full has 9 test wafers (30 in B): one wafer ≈ 0.01 macro-F1, and several test differences above are mostly Near-full.')
 w('- One fixed stratified split (the paper averages 10 random splits).')
 w('- Stage 2 stackers are fitted on B only (honest base outputs, 26k wafers) while the Stage 1 headline MLR was fitted on A; '

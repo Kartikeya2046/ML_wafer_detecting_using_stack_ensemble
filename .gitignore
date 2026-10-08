@@ -44,3 +44,16 @@ Thumbs.db
 !data/stack_cv_S2tta_*.pkl
 !data/stack_cv_S3_*.pkl
 !data/stack_cv_ctl*.pkl
+# Stage 2b: outputs needed by extensions_results.py / nsweep.py / predict.py --verify stay tracked
+!data/cnn_imnet_cw0_aug_s*_outputs.pkl
+!data/cnn_imnet_cw0_aug_s*_tta_outputs.pkl
+!data/cnn_ens5_tta_outputs.pkl
+!data/cnn_multinn_outputs.pkl
+!data/stack_e5_*.pkl
+!data/stack_cv_e5_*.pkl
+!data/stack_FINAL_stack_dt_*.pkl
+!data/stack_S2_dt_*.pkl
+!data/stack_cv_S2_dt_*.pkl
+data/final_predictions.pkl
+# XGB bagging models (rejected, 43 MB each) are not kept in git; the chosen XGB model is
+models/xgb_*_bag_*.json

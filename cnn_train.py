@@ -1,7 +1,12 @@
 """CNN base learner (VGG16-style, paper Table 4) - GPU training for Part B4.
 
 Usage:  run_gpu.sh cnn_train.py --tag NAME [--aug] [--smooth 0.1] [--plateau] [--batch 32] [--fp32] [--imagenet] [--cw 0]
+                                  [--seed S] [--multinn] [--subset N --rep R]
+        run_gpu.sh cnn_train.py --tag NAME --tta     (Stage 2 C4: predict with the 8 symmetries, no training)
         run_gpu.sh cnn_train.py --bench
+--multinn: the paper's MultiNN baseline (paper 4.4; reference repo DMkelllog/wafermap_MultiNN): the CNN's 512-d global
+average pooling output concatenated with the 59 standardised handcrafted features (scaling fitted on A), dropout 0.2,
+then the 9-way softmax. Everything else as the CNN.
 Fits on A, early-stops on B_fit, saves softmax for train (all 162,946) + test to data/cnn_<tag>_outputs.pkl.
 """
 import argparse, time
@@ -14,6 +19,8 @@ ap.add_argument('--plateau', action='store_true'); ap.add_argument("--batch", ty
 ap.add_argument('--fp32', action='store_true'); ap.add_argument('--seed', type=int, default=0); ap.add_argument('--bench', action='store_true')
 ap.add_argument('--imagenet', action='store_true')  # paper 4.3: VGG pre-trained on ImageNet
 ap.add_argument('--cw', type=float, default=1.0)  # class-weight power: 1 balanced, 0 none (paper)
+ap.add_argument('--multinn', action='store_true')  # paper's MultiNN baseline
+ap.add_argument('--subset', type=int, default=0); ap.add_argument('--rep', type=int, default=0)  # training-size sweep (nsweep.py)
 ap.add_argument('--tta', action='store_true')  # Stage 2 C4: predict only, load models/cnn_<tag>.keras, average the 8 symmetries
 a = ap.parse_args()
 if a.tta:
@@ -34,12 +41,17 @@ def build():
             x = L.Conv2D(f, 3, padding='same', activation='relu')(x)
         x = L.MaxPooling2D(2)(x)
     x = L.GlobalAveragePooling2D()(x)
+    if a.multinn:
+        inp = [inp, L.Input((59,))]
+        x = L.Dropout(0.2)(L.Concatenate()([x, inp[1]]))
     out = L.Dense(9, activation='softmax', dtype='float32')(x)  # float32 head for mixed precision stability
     return tf.keras.Model(inp, out)
 
 
 def augment(x, *rest):
     # per-sample flip + 90-degree rotation (the 8 symmetries of the square), vectorised over the batch
+    if isinstance(x, tuple):  # MultiNN: augment the map, not the handcrafted features
+        return (augment(x[0])[0], x[1]), *rest
     n = tf.shape(x)[0]
     rots = tf.stack([tf.image.rot90(x, i) for i in range(4)], axis=1)  # (n, 4, 64, 64, 1)
     x = tf.gather(rots, tf.random.uniform([n], 0, 4, tf.int32), batch_dims=1)
@@ -52,8 +64,10 @@ def ds(idx, src, mode='pred', aug=False):
     mode: 'train' -> (x, y, w) shuffled, 'val' -> (x, y), 'pred' -> x."""
     def get(i):
         x = (tf.cast(tf.gather(src, i), tf.float32) - 0.5) * 2.0  # stored float16 in [0,1] -> [-1,1] as in the paper repo
+        if a.multinn:
+            x = (x, tf.gather(FT if src is XT else FE, i))
         if mode == 'pred':
-            return x
+            return (x,) if a.multinn else x  # 1-tuple: Keras would read a bare 2-tuple as (x, y)
         return (x, tf.gather(YT, i)) + ((tf.gather(WT, i),) if mode == 'train' else ())
     d = tf.data.Dataset.from_tensor_slices(np.asarray(idx, np.int64))
     if mode == 'train':
@@ -67,12 +81,18 @@ def ds(idx, src, mode='pred', aug=False):
 Xtr, Xte = ld('X_CNN.pkl')
 y, yt = labels()
 A, B_fit, B_val = splits(y)
+if a.subset:  # paper's training-size sweep: fit on 80% of a random N, early-stop on the other 20%
+    A, B_fit = subset(a.subset, a.rep)
 cw = class_weights(y[A], a.cw)
 with tf.device('/CPU:0'):  # Variables are captured by reference in tf.data (constants would hit the 2 GB graph limit)
     XT = tf.Variable(Xtr.reshape(-1, 64, 64, 1), trainable=False)  # float16, the only copy
     XE = tf.Variable(Xte.reshape(-1, 64, 64, 1), trainable=False)
     YT = tf.constant(tf.keras.utils.to_categorical(y, 9))
     WT = tf.constant(np.array([cw[c] for c in y], np.float32))
+    if a.multinn:
+        Ftr, Fte = ld('X_MFE.pkl')
+        mu, sd = Ftr[A].mean(0), Ftr[A].std(0); sd[sd == 0] = 1
+        FT, FE = (tf.constant(((f - mu) / sd).astype(np.float32)) for f in (Ftr, Fte))
 del Xtr, Xte
 
 if a.bench:
@@ -123,6 +143,13 @@ model.fit(ds(A, XT, 'train', aug=a.aug), validation_data=ds(B_fit, XT, 'val'),
 print(f'train time {(time.time() - t0) / 3600:.2f} h', flush=True)
 
 pred = lambda src: model.predict(ds(np.arange(src.shape[0]), src), verbose=0).astype(np.float32)
+if a.subset:  # sweep run: keep only what the stacker and the test score need (no 170 MB model per replicate)
+    os.makedirs(P('data', 'nsweep'), exist_ok=True)
+    ptr = model.predict(ds(A, XT), verbose=0).astype(np.float32)
+    dump({'fit_idx': A, 'fit_prob': ptr, 'test_prob': pred(XE), 'args': vars(a)},
+         f'nsweep/cnn_N{a.subset}_r{a.rep}.pkl')
+    print(f'[N={a.subset} rep {a.rep}] done', flush=True)
+    raise SystemExit
 out = {'train_prob': pred(XT), 'test_prob': pred(XE), 'args': vars(a)}
 model.save(P('models', f'cnn_{a.tag}.keras'))
 dump(out, f'cnn_{a.tag}_outputs.pkl')

@@ -8,6 +8,11 @@
 >   (built by `extensions_results.py`). Final pipelines chosen on B: MLR = MFE-FNN + CNN-TTA, test **0.9051 ± 0.0069**;
 >   FNN = MFE-FNN + CNN-TTA + XGB, test **0.9070 ± 0.0037**. TTA helps; XGB as 3rd learner is mixed (MLR Stack-3 0.9149 on
 >   test but rejected on B); XGB replacing the MFE-FNN is best (0.9160); reject option: 95% coverage → 99.6% accuracy.
+> - **Stage 2b (best results + missing paper baselines) DONE 2026-10-08** (user: "keep the best models, best approach").
+>   **Final pipeline: 5 CNN seeds (TTA) + XGBoost → MLR, test macro-F1 0.9134** (accuracy 98.21%; 99.72% on the 95%
+>   auto-classified with the reject option). Runnable: `predict.py`. Paper baselines added: Stacking-DT 0.8782 (paper
+>   0.8789), MultiNN 0.8880 (paper 0.8455), training-size sweep N = 500 / 5,000 / 50,000 (`nsweep_results.md`).
+> - **For the write-up use `writeup_notes.md`** (paper did / we implemented / we did differently — kept current).
 > - **Next: Part D** (report, slides, viva one-pager) in `implementation_plan.md` — plan it with the user first (§9).
 > - **Machine:** since 2026-10-08 the project runs on a Linux workstation (§8, "Linux workstation"). Old Windows notes kept.
 > - **Reading order:** this file → `implementation_plan.md` (master plan, Parts A–D) → `stage2_plan.md` →

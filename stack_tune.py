@@ -10,6 +10,7 @@ Usage:  run_cpu.sh stack_tune.py NAME [key=value ...] [final=1]
     base_seeds=1   >1: repeat with the first input's other seeds (<name>_s1, _s2 ...), i.e. score the stack over base-learner seeds
                    an input written <name>+k uses seed (b + k) mod base_seeds in round b (e.g. a 2nd MFE seed as 3rd learner)
     meta=fnn|mlr   mlr = paper's proposed meta-learner: ridge regression on one-hot targets, alpha=0.1 (eq. 5)
+                   dt = paper's Stacking-DT baseline (sklearn default decision tree)
   Tuning score: 2-fold cross-fit over B (B_fit <-> B_val), predictions pooled over all of B.
   final=1: fit with the full protocol, score on the 10,000 test wafers, save probs.
 Results append to logs/stack_trials.jsonl. Saved per (base seed b, seed s): tuning -> pooled B predictions
@@ -64,6 +65,10 @@ class F1Stop(tf.keras.callbacks.Callback):
 
 
 def fit_predict(fit_idx, es_idx, Xp, seed):
+    if cfg['meta'] == 'dt':  # paper's Stacking-DT baseline: scikit-learn DecisionTreeClassifier, default hyperparameters
+        from sklearn.tree import DecisionTreeClassifier
+        t = DecisionTreeClassifier(random_state=seed).fit(X[fit_idx], y[fit_idx])
+        return t.predict_proba(Xp), 0
     if cfg['meta'] == 'mlr':  # deterministic, no early stopping; cw>0 -> class-weighted least squares
         from sklearn.linear_model import Ridge
         w = class_weights(y[fit_idx], cfg['cw'])

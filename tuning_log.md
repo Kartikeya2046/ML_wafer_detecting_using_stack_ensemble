@@ -243,3 +243,75 @@ carry most of it). Reported, not switched after seeing test.
 
 ## Environment fixes made along the way
 - tf_keras 2.17 + Python 3.12: `randint(1, 1e9)` TypeError after `set_random_seed` → patched in the venv (`setup_env.sh`).
+
+---
+
+# Stage 2b — best-results pipeline + missing paper baselines (2026-10-08, branch `stage2`)
+
+User request: keep the best models, take the approach that gives the best results, document everything for the write-up
+(`writeup_notes.md`). Selection stays on B only; test is evaluated once for the final candidates.
+
+## Saved models (so the final pipeline can be re-run, not only its outputs)
+- `mfe_tune.py ... save=1` → `models/mfe_cw0_5s[_s1..4].keras` + `mfe_cw0_5s_scale.npz`; re-run outputs equal the
+  committed Stage 2 outputs within 2.4e-7 (B_val seeds identical). `xgb_tune.py` now always saves `models/xgb_<name>.json`;
+  the `d6_lr05_cw1` refit is bit-identical (0.0 diff).
+
+## Paper baselines missing from Stage 1
+- **Stacking-DT** (`stack_tune.py meta=dt`, sklearn default `DecisionTreeClassifier`), paper protocol (fit on A, as the
+  Stage 1 MLR), 3 MFE seeds: **test 0.8782 ± 0.0065 vs paper 0.8789 ± 0.0094** — matches. Fitted on B instead (Stage 2
+  protocol): B-cv 0.8429 ± 0.0063, test 0.8621 ± 0.0119 (a tree needs more data than B's 26k wafers).
+- **MultiNN** (`cnn_train.py --multinn`, architecture from `DMkelllog/wafermap_MultiNN`: VGG16 GAP 512 ⊕ 59 standardised
+  features → dropout 0.2 → softmax; our CNN recipe otherwise): training on GPU (`logs/cnn_multinn.log`).
+
+## CNN seed ensemble (fixes the single-CNN-seed limitation)
+- Seeds 1–4 of the frozen recipe (`--imagenet --cw 0 --fp32 --aug --seed s`), 2 at a time + MultiNN on the GPU
+  (~150 s/epoch with 2 jobs, ~240 s with 3). Detached queue `logs/cnn_queue_stage2b.sh` also runs TTA for each.
+
+## XGB bagging — negative result
+5 seeds with subsample = colsample = 0.8 (`xgb_d6_lr05_cw1_bag_s0..4`): standalone B_val 0.8726–0.8766, averaged
+(`average_outputs.py xgb_bag5`) **0.8785** vs single XGB 0.8704. But inside the stacks (MLR, B-cv) it is slightly worse:
+CNN-TTA + XGB 0.9123 → 0.9105 (−0.0018, CI [−0.007, +0.005]); Stack-3 0.9105 → 0.9091 (−0.0014, p 0.009).
+→ keep the single XGB. (Same lesson as Stage 1 B3: a better standalone model is not automatically a better stack input.)
+`average_outputs.py` prints test scores only with `test=1`, so selection runs cannot look at test.
+
+## Training-size sweep (paper Table 7 other blocks, Fig. 3) — closing a reproduction gap
+`nsweep.py` + `cnn_train.py --subset N --rep R`: per replicate a random N training wafers (`common.subset`), 80% fit /
+20% early stop (paper 4.2), our frozen base-learner recipes, MLR / DT / FNN(18→10→9) stackers fitted on the fit part
+(paper protocol), all scored on the 10,000 test wafers. Replicates: 10 for N = 500 and 5,000 (as the paper), 5 for
+N = 50,000 (GPU budget). Paper's full Table 7 (all 6 models × 4 N) copied into `nsweep.py` from `journal.pdf` p. 7.
+- MFE-FNN: all 25 replicates done on CPU (10 in parallel). CNN: detached queue `logs/cnn_queue_nsweep.sh`.
+- Fix: `common.class_weights` crashed when a small subset misses a class (even with cw = 0) → cw = 0 now returns
+  all-ones; balanced weights on full data verified unchanged (Stage 1/2 unaffected).
+- **N = 500 / 5,000 results** (10 replicates each, test macro-F1, ours vs paper; `nsweep_results.md`):
+  N=500: MFE 0.4621 ± 0.0599 (0.5558), CNN 0.4899 ± 0.0875 (0.4937), DT 0.2680 ± 0.1399 (0.5179), FNN 0.4352 ± 0.0318 (0.5085),
+  **MLR 0.5140 ± 0.0779 (0.5872)**. N=5,000: MFE 0.7286 ± 0.0233 (0.6983), CNN 0.7880 ± 0.0411 (0.6954),
+  DT 0.7394 ± 0.0414 (0.7217), FNN 0.7977 ± 0.0328 (0.7350), **MLR 0.8037 ± 0.0341 (0.7599)**.
+  → paper's claim (MLR stack > both base learners) holds at both sizes. At 5,000 we beat the paper everywhere (our CNN
+  recipe — augmentation, no class weights — matters most when data is scarce: +0.09). At 500 we are below the paper on
+  MFE and the stackers, with large stds on both sides; 400 fit wafers often miss rare classes entirely (rep 0: no Donut,
+  no Near-full). Stacking-DT collapses at 500: the base learners are near-perfect in-sample (99.8% / 98.8% acc), so the
+  tree learns thresholds on near-one-hot probabilities that do not transfer to test (same in-sample overconfidence
+  mechanism as Stage 1 finding 1, amplified at small N).
+
+## CNN seed ensemble — first results
+Seeds 1–2 (TF 2.17, Linux): B_val plain 0.8850 / 0.8974, TTA 0.9053 / 0.9143 vs seed 0 (TF 2.10, laptop) 0.8723 / 0.8797.
+Best val loss is practically identical (0.0540 / 0.0538 / 0.0530; best epochs 11 / 12 / 21), so seed 0 is not broken:
+macro-F1 on rare classes swings strongly between seeds at equal loss → the single-seed CNN was a real limitation.
+3-seed TTA ensemble `cnn_ens3_tta` (B_val 0.9145) in MLR stacks, B-cv: MFE+CNN 0.9074 → **0.9165**; MFE+CNN+XGB
+0.9105 → **0.9185**; CNN+XGB 0.9123 → **0.9194**. Final selection waits for seeds 3–4 (5-seed ensemble).
+
+## CNN seeds 3–4, 5-seed ensemble, final selection (B) and single test evaluation
+- Seeds 3 / 4: B_val plain 0.8858 / 0.8802, TTA 0.8987 / 0.8933. All 5 seeds TTA: B_val 0.8983 ± 0.0116.
+  `cnn_ens5_tta` (mean of 5): **B_val 0.9221**.
+- Candidates on B (mode B, cw 0): MLR — MFE+CNN×5 0.9165 ± 0.0057, MFE+CNN×5+XGB 0.9182 ± 0.0039, **CNN×5+XGB 0.9223**;
+  FNN — 0.9089, 0.9145, 0.9097. CNN×5+XGB vs CNN×1+XGB (MLR): +0.0100, CI [+0.003, +0.018].
+  With the strong CNN the MFE-FNN no longer helps (MFE+CNN×5+XGB is 0.0062 below CNN×5 alone on B_val).
+  → **Final (chosen on B): CNN×5 (TTA) + XGB(d6_lr05_cw1) → MLR (α 0.1, fitted on B).**
+- Test (once): final **0.9134** (acc 0.9821); MFE+CNN×5+XGB MLR 0.9125 ± 0.0015; vs Stage 1 headline +0.0168
+  (CI [+0.0004, +0.0399]); vs Stage 2 MLR final +0.0083 (CI incl. 0); vs CNN×1+XGB −0.0025 (CI [−0.014, +0.009]: noise).
+  CNN seeds alone on test: 0.8924 ± 0.0116; ensemble 0.9126. MultiNN: B_val 0.8994, test 0.8880 (paper 0.8455).
+- Calibration / reject (`calibrate.py e5_ctlA_mlr`): T 0.133; ECE 0.0041 (clipped ridge) → 0.0070; 95% target →
+  95.2% auto-classified at 99.72% accuracy, macro-F1 0.9861; 90% → 99.96%.
+- `predict.py` (+ `models/final_pipeline.npz` via `predict.py export=1`) rebuilds the final test predictions from the saved
+  models only: max |score diff| 7.4e-5, identical classes. GPU OOM at inference batch 512 while 3 sweep runs held the GPU →
+  batch 128.

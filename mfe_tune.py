@@ -3,6 +3,7 @@
 Usage:  run_cpu.sh mfe_tune.py NAME [key=value ...]
   keys (defaults = paper Table 3 / notebook cell 4):
     width=128 depth=2 act=tanh dropout=0 lr=1e-4 batch=32 cw=1.0 patience=20 seeds=3
+    save=1: also save each seed's model (models/mfe_<NAME>[_s<seed>].keras) and the feature scaling (models/mfe_<NAME>_scale.npz)
 Fits on A, early-stops on B_fit, scores standalone macro-F1 on B_val. Each seed's softmax (all train + test)
 is saved to data/mfe_<NAME>[_s<seed>]_outputs.pkl; stack_tune.py uses it via inputs=mfe_<NAME>,cnn
 (add base_seeds=3 there to average the stack over the 3 MFE seeds).
@@ -14,7 +15,7 @@ from common import *
 import tensorflow as tf
 
 name, kv = sys.argv[1], dict(s.split('=') for s in sys.argv[2:])
-cfg = dict(width=128, depth=2, act='tanh', dropout=0.0, lr=1e-4, batch=32, cw=1.0, patience=20, seeds=3)
+cfg = dict(width=128, depth=2, act='tanh', dropout=0.0, lr=1e-4, batch=32, cw=1.0, patience=20, seeds=3, save=0)
 cfg.update({k: type(cfg[k])(v) for k, v in kv.items()})
 
 Xtr, Xte = ld('X_MFE.pkl')
@@ -23,6 +24,8 @@ A, B_fit, B_val = splits(y)
 mu, sd = Xtr[A].mean(0), Xtr[A].std(0)
 sd[sd == 0] = 1
 Xtr, Xte = ((Xtr - mu) / sd).astype(np.float32), ((Xte - mu) / sd).astype(np.float32)
+if cfg['save']:
+    np.savez(P('models', f'mfe_{name}_scale.npz'), mu=mu, sd=sd)
 oh = lambda v: tf.keras.utils.to_categorical(v, 9)
 
 t0, rows, eps = time.time(), [], []
@@ -39,6 +42,8 @@ for seed in range(cfg['seeds']):
     eps.append(len(h.history['loss']))
     ptr = m.predict(Xtr, batch_size=4096, verbose=0)
     rows.append(f1s(y[B_val], ptr[B_val]))
+    if cfg['save']:
+        m.save(P('models', f'mfe_{name}.keras' if seed == 0 else f'mfe_{name}_s{seed}.keras'))
     dump({'train_prob': ptr, 'test_prob': m.predict(Xte, batch_size=4096, verbose=0), 'cfg': cfg},
          f'mfe_{name}_outputs.pkl' if seed == 0 else f'mfe_{name}_s{seed}_outputs.pkl')
 F = np.array(rows); mac = F.mean(1)
