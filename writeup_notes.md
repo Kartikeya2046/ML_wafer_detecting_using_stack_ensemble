@@ -106,10 +106,12 @@ Saved and runnable: `predict.py` + `models/final_pipeline.npz`, `models/xgb_d6_l
 |---|---|---|---|
 | 500 | 0.462 / 0.556 | 0.490 / 0.494 | 0.514 / 0.587 |
 | 5,000 | 0.729 / 0.698 | 0.788 / 0.695 | 0.804 / 0.760 |
-| 50,000 | *(running)* | | |
+| 50,000 | 0.837 / 0.831 | 0.883 / 0.840 | 0.876 / 0.869 |
 | 162,946 | 0.857 / 0.860 | 0.878 / 0.868 | 0.897 / 0.895 |
-Takeaways: the stack beats both base learners at every N (paper's claim confirmed); our recipe helps most at mid-size
-data (N = 5,000); at N = 500 rare classes are often absent from the 400 training wafers and results are noisy on both
+Takeaways: the MLR stack beats both base learners at N = 500, 5,000 and 162,946 (paper's claim confirmed there) but
+**not at N = 50,000** (0.876 < CNN 0.883; the FNN stacker 0.886 does) — under the paper's protocol the meta-learner sees
+in-sample predictions, where our strong CNN looks near-perfect. Our recipe beats the paper at N ≥ 5,000 for every model
+and helps most at mid-size data (CNN +0.09 at N = 5,000); at N = 500 rare classes are often absent from the 400 training wafers and results are noisy on both
 sides; Stacking-DT collapses at N = 500 (in-sample overconfidence — same mechanism as finding 3a-1).
 
 ## 4. Story for the report / viva (plain language)
@@ -124,8 +126,8 @@ sides; Stacking-DT collapses at N = 500 (in-sample overconfidence — same mecha
 - ~~**MultiNN**~~ — **done 2026-10-08:** test 0.8880 (single run) vs paper 0.8455 ± 0.0170 (`cnn_train.py --multinn`,
   architecture from the authors' `wafermap_MultiNN` repo; our CNN recipe otherwise).
 - ~~**Stacking-DT**~~ — **done 2026-10-08:** test 0.8782 ± 0.0065 vs paper 0.8789 ± 0.0094 (paper protocol: fitted on A).
-- **Training-size sweep** N ∈ {500, 5,000, 50,000} (paper Table 7 other blocks, Fig. 3) — **running** (`nsweep.py`,
-  10 replicates for N ≤ 5,000, 5 for 50,000; results → `nsweep_results.md`).
+- ~~**Training-size sweep**~~ — **done 2026-10-08** (`nsweep_results.md`; 10 replicates for N ≤ 5,000, 5 for 50,000).
+  Only Table 7 macro-F1 is reproduced; per-class Table 8 blocks and Fig. 3 (plot) for N < 162,946 are not.
 - **Preliminary model-selection experiments** (paper Tables 5–6: other MFE classifiers and other CNNs) — not reproduced; we used the paper's chosen FNN and VGG directly.
 - 10 random splits × replications — we use one split (seeds over learners; wafer bootstrap for test noise).
 

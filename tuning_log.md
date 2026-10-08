@@ -315,3 +315,12 @@ macro-F1 on rare classes swings strongly between seeds at equal loss → the sin
 - `predict.py` (+ `models/final_pipeline.npz` via `predict.py export=1`) rebuilds the final test predictions from the saved
   models only: max |score diff| 7.4e-5, identical classes. GPU OOM at inference batch 512 while 3 sweep runs held the GPU →
   batch 128.
+
+## Training-size sweep — N = 50,000 (5 replicates) and final table (`nsweep_results.md`)
+N=50,000: MFE 0.8366 ± 0.0053 (paper 0.8310), CNN 0.8829 ± 0.0054 (0.8397), DT 0.8533 ± 0.0099 (0.8415),
+FNN 0.8858 ± 0.0031 (0.8746), **MLR 0.8758 ± 0.0079 (0.8686)** → ours ≥ paper for every model.
+**Correction:** the MLR stack does *not* beat the CNN at N = 50,000 (0.8758 < 0.8829; the FNN stacker does, 0.8858).
+So "MLR beats both base learners" holds at N = 500, 5,000 and 162,946 but not at 50,000. Likely cause: the paper's
+protocol fits the meta-learner on the base learners' in-sample predictions (fit part), where our augmented CNN looks
+near-perfect, so the ridge cannot learn when to distrust it — the same mechanism as Stage 1 finding 1 (which is why our
+Stage 1/2 stackers use the honest split B). The earlier Stage 2b commit message's "at every N" covered only N ≤ 5,000.
