@@ -7,12 +7,13 @@ import pandas as pd
 from skimage.transform import resize
 from sklearn.model_selection import train_test_split
 
-sys.path.append(r"d:\assignment college\VLSI_PROJECT\WMPC_Stacking_TF2\run_code")
+ROOT = os.path.dirname(os.path.abspath(__file__))  # project folder (was hard-coded d:\assignment college\VLSI_PROJECT)
+sys.path.append(os.path.join(ROOT, "WMPC_Stacking_TF2", "run_code"))
 from extract_manual_features import find_regions, change_val, cubic_inter_mean, cubic_inter_std, fea_geom, extract_features
 
 def main():
     print("Loading original data...")
-    df = pd.read_pickle(r"d:\assignment college\VLSI_PROJECT\LSWMD.pkl\LSWMD.pkl")
+    df = pd.read_pickle(os.path.join(ROOT, "LSWMD.pkl", "LSWMD.pkl"))
 
     print("Filtering and formatting...")
     # Follow the preprocessing steps from the reference repo
@@ -54,12 +55,12 @@ def main():
     print(f"Train size: {len(idx_train)}, Test size: {len(idx_test)}")
     
     # Save the processed data
-    os.makedirs(r"d:\assignment college\VLSI_PROJECT\data", exist_ok=True)
-    with open(r"d:\assignment college\VLSI_PROJECT\data\X_CNN.pkl", 'wb') as f:
+    os.makedirs(os.path.join(ROOT, "data"), exist_ok=True)
+    with open(os.path.join(ROOT, "data", "X_CNN.pkl"), 'wb') as f:
         pickle.dump((X_resize[idx_train], X_resize[idx_test]), f, protocol=4)
-    with open(r"d:\assignment college\VLSI_PROJECT\data\X_MFE.pkl", 'wb') as f:
+    with open(os.path.join(ROOT, "data", "X_MFE.pkl"), 'wb') as f:
         pickle.dump((fea_all[idx_train], fea_all[idx_test]), f, protocol=4)
-    with open(r"d:\assignment college\VLSI_PROJECT\data\y.pkl", 'wb') as f:
+    with open(os.path.join(ROOT, "data", "y.pkl"), 'wb') as f:
         pickle.dump((y[idx_train], y[idx_test]), f, protocol=4)
         
     print("Phase 2 data pipeline completed successfully!")

@@ -32,18 +32,18 @@ Reported results before the fix (macro-F1): MFE+FNN 0.8147, CNN 0.8496, Stacking
 ### A2. Findings made in this session
 
 1. **Stacking bug found and fixed.** The meta-learner was trained without class weights (the base learners use them). It early-stopped at ~23 epochs and ignored rare classes, so Near-full F1 = 0.0000 even though both base learners predicted it correctly. With `class_weight='balanced'` one test run gave macro-F1 0.850 and Near-full F1 0.737.
-   - Fix is applied in notebook cell 14 (`class_weight=class_weight_dict`). **The cell has not been re-run, so `data/stacking_outputs.pkl` and `results_comparison.md` still hold the old, buggy numbers.**
+   - Fix is applied in notebook cell 14 (`class_weight=class_weight_dict`). *(Resolved in Part B: the fixed baseline was re-run as B1 by `stack_tune.py`, and `results_comparison.md` is now built by `freeze_results.py`. `data/stacking_outputs.pkl` is the old notebook output, kept for history.)*
 2. **Seed noise is large.** 5 seeds of the fixed 2-learner stack: macro-F1 **0.8424 ± 0.0405**. Near-full has 9 test samples, so one wafer moves its F1 by roughly 0.1. Any comparison must use multi-seed mean ± std.
 3. **XGBoost on the 59 features** reaches macro-F1 **0.8285** standalone (5-fold out-of-fold train predictions cached in `data/xgb_outputs.pkl`). This is above the MFE+FNN (0.8147), which is why it's the candidate third learner.
 4. **Meta-learner trains on in-sample base predictions** (`train_prob` comes from models trained on the same data). This matches the reference repo, so we keep it for the baseline, but it is a known weakness and a candidate for tuning (see B2).
 
-### A3. Work-in-progress files (uncommitted)
-- `phase7_extensions.py` — full script for the 3-learner stack + calibration/reject option. Written, partly run (stopped on purpose). **Not to be run until Part C starts.**
-- `data/xgb_outputs.pkl`, `ext.log` — by-products of that run.
-- `training_pipeline.ipynb` (cell 14 edited), `results_comparison.md`, `results_comparisons.ipynb` — modified/untracked.
+### A3. Prototype files (now committed)
+- `phase7_extensions.py` — early prototype of the 3-learner stack + calibration/reject option. **Superseded by `stage2_plan.md`** (its 5-fold OOF XGB design breaks Stage 2 rule 2); kept for history, not to be run.
+- `data/xgb_outputs.pkl` (not in git, not used by Stage 2), `ext.log` — by-products of that prototype run.
+- `training_pipeline.ipynb`, `results_comparison.md`, `results_comparisons.ipynb` — committed with Stage 1 (`4bfadf7`).
 
-### A4. To verify
-- `context.md` §6 says the reproduction is at the paper's N=5000 benchmark, but the saved arrays are the full 162,946 training set and `models/` holds both full and `_5k` variants. **Step B0 must confirm which models/numbers are the headline ones.**
+### A4. Resolved: N=5000 vs full data
+- Settled in B0 (2026-10-06): headline numbers are full data, N=162,946 train / 10,000 test (`context.md` §6). The `models/*_5k.keras` files are the superseded N=5000 workaround.
 
 ---
 

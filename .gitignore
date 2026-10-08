@@ -21,6 +21,7 @@ data/stack_*.pkl
 !data/stack_final_mlr_A_s0.pkl
 
 # Python
+.venv/
 __pycache__/
 *.pyc
 
