@@ -315,7 +315,7 @@ B_fit / B_val (`common.py:splits`). All selection on B; test touched only for fi
 **Git** — repo `https://github.com/Kartikeya2046/ML_wafer_detecting_using_stack_ensemble`, branch `main`
 (also `stage1-tuning`; tag `stage1-frozen`). Stage 2 work goes on a new branch `stage2` from `stage1-frozen`.
 
-**Large files that are NOT in git** (GitHub rejects files > 100 MB). Copy these from the old machine (USB/drive),
+**Large files that are NOT in git** (GitHub rejects files > 100 MB). **Current, complete list (incl. Stage 2b CNN seeds): `LOCAL_ONLY_FILES.md`.** Copy these from the old machine (USB/drive),
 keeping the same relative paths inside the project folder:
 
 | File | Size | Needed for | If lost |
