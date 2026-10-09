@@ -123,8 +123,10 @@ Do not start until Part B is frozen. First step of Part C is to write `stage2_pl
 
 ## Part D — Closing the project
 
+**Status (2026-10-09): done** — see `partD_plan.md` (paper in `paper/`, viva material in `viva/`, slides in `slides/`).
+
 1. **Paper comparison (Phase 6 remainder):** extract the paper's own per-class and macro numbers from `journal.pdf` (never from memory), place them next to ours, and write the honest discussion paragraph.
-2. **Report** (Word): Introduction, Related Work, Dataset, Methodology, Results (reproduction + tuning + extensions), Discussion/Limitations, Conclusion. State clearly what is the paper's method and what is our own contribution. Note that implementation was AI-assisted, as the professor approved.
+2. **Paper** (LaTeX, IEEE two-column — see `partD_plan.md`, which supersedes this list): Introduction, Related Work, Dataset, Methodology, Results (reproduction + extensions), Discussion/Limitations, Conclusion. State clearly what is the paper's method and what is our own contribution. **Do not mention AI anywhere** (user instruction 2026-10-09).
 3. **Slides** mirroring the report.
 4. **Viva one-pager:** wafer maps and why classification matters, handcrafted vs CNN features, why stacking helps, why the class-weight bug mattered, what the extensions add.
 5. **Housekeeping:** update `context.md` and `plan.md`, commit with sensible messages, remove stray scripts (`fix_*.py`, `test_geom*.py`) or move them to an `archive/` folder.

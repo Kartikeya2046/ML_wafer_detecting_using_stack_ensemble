@@ -13,7 +13,11 @@
 >   auto-classified with the reject option). Runnable: `predict.py`. Paper baselines added: Stacking-DT 0.8782 (paper
 >   0.8789), MultiNN 0.8880 (paper 0.8455), training-size sweep N = 500 / 5,000 / 50,000 (`nsweep_results.md`).
 > - **For the write-up use `writeup_notes.md`** (paper did / we implemented / we did differently — kept current).
-> - **Next: Part D** (report, slides, viva one-pager) in `implementation_plan.md` — plan it with the user first (§9).
+> - **Part D DONE (2026-10-09)** — decisions in `partD_plan.md`. Paper: `paper/main.pdf` (IEEE two-column, 8 pages,
+>   source `paper/main.tex`, every table/figure/number from `paper/make_assets.py`). Viva material (separate from the
+>   LaTeX): `viva/one_pager.md`, `viva/likely_questions.md`, `viva/explanation.md`. Slides: `slides/slides.pdf`.
+>   Compile: `cd paper && ../tools/tectonic main.tex` (Tectonic in `tools/`, not in git). **Never mention AI in the
+>   paper/slides/viva** (user). Open: push to GitHub (needs the user's yes); instructor co-authorship (user's call).
 > - **Machine:** since 2026-10-08 the project runs on a Linux workstation (§8, "Linux workstation"). Old Windows notes kept.
 > - **Reading order:** this file → `implementation_plan.md` (master plan, Parts A–D) → `stage2_plan.md` →
 >   `extensions_results.md` / `tuning_log.md` / `results_comparison.md` as needed. `plan.md` is superseded (history only).

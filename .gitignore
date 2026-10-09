@@ -57,3 +57,21 @@ Thumbs.db
 data/final_predictions.pkl
 # XGB bagging models (rejected, 43 MB each) are not kept in git; the chosen XGB model is
 models/xgb_*_bag_*.json
+# Part D: local LaTeX engine (Tectonic release binary) and LaTeX by-products
+tools/
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.nav
+paper/*.snm
+paper/*.toc
+paper/*.bbl
+paper/*.blg
+slides/*.aux
+slides/*.log
+slides/*.out
+slides/*.nav
+slides/*.snm
+slides/*.toc
+slides/*.bbl
+slides/*.blg

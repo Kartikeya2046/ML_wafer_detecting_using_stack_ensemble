@@ -1,6 +1,6 @@
 """Stage 2 C3 (optional): Grad-CAM heatmaps for the frozen CNN (stage2_plan.md step 4).
 
-Usage:  run_gpu.sh gradcam.py [tag=imnet_cw0_aug] [layer=block4_conv3] [n=3]
+Usage:  run_gpu.sh gradcam.py [tag=imnet_cw0_aug] [layer=block4_conv3] [n=3] [title=0]
 For each class: n correctly classified test wafers (highest confidence) + up to 2 misclassified ones.
 Layer: block4_conv3 (8x8 maps) - the last conv layer block5_conv3 is only 4x4 on 64x64 inputs, too coarse to read.
 Heatmap = ReLU(sum_k mean(dy_c/dA_k) * A_k) for the predicted class c, upsampled to 64x64.
@@ -70,8 +70,9 @@ for c, r in enumerate(rows):
                         color='#222' if pred[i] == c else '#c0392b')
         else:
             a.axis('off')
-    ax[c, 0].set_ylabel(NAMES[c], fontsize=9)
-fig.suptitle(f'Grad-CAM ({layer}) on test wafers — {n} correct (left) + misclassified (red)', fontsize=10)
+    ax[c, 0].set_ylabel(NAMES[c] if NAMES[c] != 'none' else 'None', fontsize=9)
+if kv.get('title', '1') == '1':
+    fig.suptitle(f'Grad-CAM ({layer}) on test wafers — {n} correct (left) + misclassified (red)', fontsize=10)
 fig.tight_layout()
 os.makedirs(P('figures'), exist_ok=True)
 fig.savefig(P('figures', f'gradcam_{tag}.png'), dpi=150)

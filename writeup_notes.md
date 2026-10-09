@@ -3,7 +3,7 @@
 **Purpose:** the single source for the final report, slides and viva (implementation_plan.md Part D). Kept current while
 work runs (user request, 2026-10-08). Every number here points to a file that holds it; nothing is from memory.
 Detailed trial logs: `tuning_log.md`. Tables: `results_comparison.md` (Stage 1), `extensions_results.md` (Stage 2).
-Last updated: 2026-10-08.
+Last updated: 2026-10-09. **The paper is written: `paper/main.pdf`** (this file remains the detailed source notes).
 
 ---
 
@@ -48,7 +48,7 @@ the MLR stack weights each per class and beats both, robustly across N.
 
 **Adapted vs. original code (academic honesty):** feature extraction and the CNN/stacking structure follow the authors'
 public repos `DMkelllog/WMPC_Stacking_TF2` and `DMkelllog/wafermap_MultiNN` (both in this folder). All training,
-tuning, evaluation, statistics and Stage 2 code is ours. Implementation was AI-assisted (approved by the professor).
+tuning, evaluation, statistics and Stage 2 code is ours. (Do not mention AI in the paper, slides or viva material — user instruction 2026-10-09, `partD_plan.md` D9.)
 
 **Stage 1 result (test, `results_comparison.md`):** Stacking-MLR **0.8967 ± 0.0060** (paper 0.8949 ± 0.0121),
 tuned Stacking-FNN **0.9041 ± 0.0028** (paper 0.8991), MFE+FNN 0.8572 ± 0.0062 (paper 0.8599), CNN 0.8777 (paper 0.8679).
